@@ -42,14 +42,14 @@ init =
 -- UPDATE
 
 type Msg =
-  StartGame
+  Deal
   | Hit
   | Stand
 
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    StartGame ->
+    Deal ->
       let
         (drawnCard1, newDeck) = Deck.draw model.deck
         (drawnCard2, newDeck2) = Deck.draw newDeck
@@ -87,16 +87,29 @@ update msg model =
 view : Model -> Html Msg
 view model =
   div []
-    [ div [] [
-      text ("Dealer's hand (" ++ String.fromInt model.dealerScore ++ "):")
-      , div[] (List.map viewCard model.dealerHand)
-      ]
-    , div [] [
-      text ("Player's hand (" ++ String.fromInt model.playerScore ++ "):")
-      , div[] (List.map viewCard model.playerHand)
-      ]
+    [ viewHand "dealer" model.dealerHand
+    , viewHand "player" model.playerHand
     , viewControls model
     ]
+
+viewHand : String -> Hand -> Html Msg
+viewHand player hand =
+  let
+    backCard = [ Cards.defaultNew Cards.Back "back" 0 ]
+    cards =
+      if player == "dealer" then
+        backCard ++ List.drop 1 hand
+      else
+        hand
+  in
+    if List.isEmpty hand then
+      text ""
+    else
+      div []
+        [
+          text (player ++ "'s hand:")
+          , div[] (List.map viewCard cards)
+        ]
 
 resolveSuit : Cards.Suit -> String
 resolveSuit suit =
@@ -165,12 +178,12 @@ viewCard card =
           img [ src imageUrl ] []
 
       Cards.Back ->
-        text ""
+        img [ src "https://deckofcardsapi.com/static/img/back.png" ] []
 
 viewControls : Model -> Html Msg
 viewControls model =
   if List.isEmpty model.dealerHand == True then
-    div [] [ button [ onClick StartGame ] [ text "Start Game"] ]
+    div [] [ button [ onClick Deal ] [ text "Deal"] ]
   else
     div []
       [ button [onClick Hit ] [ text "Hit"]
