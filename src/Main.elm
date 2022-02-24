@@ -35,6 +35,7 @@ type alias Hand =
 
 type alias AppData =
     { deck : Deck.ShuffledDeck
+    , stand : Bool
     , dealerHand : Hand
     , playerHand : Hand
     , dealerScore : Int
@@ -49,6 +50,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { deck = Deck.fullDeck
+    , stand = False
     , dealerHand = []
     , playerHand = []
     , dealerScore = 0
@@ -65,7 +67,6 @@ type Msg
     | ShuffleDeck Deck.ShuffledDeck
     | Hit
     | Stand
-    | Noop
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -103,6 +104,7 @@ update msg model =
                 , playerHand = playerCards
                 , dealerScore = dealerScore
                 , playerScore = playerScore
+                , stand = False
               }
             , Cmd.none
             )
@@ -130,10 +132,9 @@ update msg model =
             )
 
         Stand ->
-            ( model, Cmd.none )
-
-        Noop ->
-            ( model, Cmd.none )
+            ( { model | stand = True }
+            , Random.generate ShuffleDeck Deck.randomDeck
+            )
 
 
 
@@ -143,20 +144,24 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-        [ viewHand "dealer" model.dealerHand
-        , viewHand "player" model.playerHand
+        [ viewHand "Dealer's hand:" model.dealerHand { hideFirstCard = model.stand == False }
+        , viewHand "Your hand:" model.playerHand { hideFirstCard = False }
         , viewControls model
         ]
 
 
-viewHand : String -> Hand -> Html Msg
-viewHand player hand =
+type alias ViewHandOpts =
+    { hideFirstCard : Bool }
+
+
+viewHand : String -> Hand -> ViewHandOpts -> Html Msg
+viewHand player hand opts =
     let
         backCard =
             [ Cards.defaultNew Cards.Back "back" 0 ]
 
         cards =
-            if player == "dealer" then
+            if opts.hideFirstCard == True then
                 backCard ++ List.drop 1 hand
 
             else
@@ -167,7 +172,7 @@ viewHand player hand =
 
     else
         div []
-            [ text (player ++ "'s hand:")
+            [ text player
             , div [] (List.map viewCard cards)
             ]
 
@@ -181,7 +186,10 @@ viewCard card =
 
 viewControls : Model -> Html Msg
 viewControls model =
-    if List.isEmpty model.dealerHand == True then
+    if model.stand == True then
+        div [] [ button [ onClick Deal ] [ text "Deal" ] ]
+
+    else if List.isEmpty model.dealerHand == True then
         div [] [ button [ onClick Deal ] [ text "Deal" ] ]
 
     else
