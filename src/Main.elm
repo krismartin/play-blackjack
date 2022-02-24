@@ -33,13 +33,16 @@ type alias Hand =
     List Cards.Card
 
 
+type alias Player =
+    { hand : Hand
+    , score : Int
+    }
+
+
 type alias AppData =
     { deck : Deck.ShuffledDeck
     , stand : Bool
-    , dealerHand : Hand
-    , playerHand : Hand
-    , dealerScore : Int
-    , playerScore : Int
+    , players : ( Player, Player )
     }
 
 
@@ -51,10 +54,10 @@ initialModel : Model
 initialModel =
     { deck = Deck.fullDeck
     , stand = False
-    , dealerHand = []
-    , playerHand = []
-    , dealerScore = 0
-    , playerScore = 0
+    , players =
+        ( { hand = [], score = 0 }
+        , { hand = [], score = 0 }
+        )
     }
 
 
@@ -100,10 +103,10 @@ update msg model =
             in
             ( { model
                 | deck = newDeck4
-                , dealerHand = dealerCards
-                , playerHand = playerCards
-                , dealerScore = dealerScore
-                , playerScore = playerScore
+                , players =
+                    ( { hand = dealerCards, score = dealerScore }
+                    , { hand = playerCards, score = playerScore }
+                    )
                 , stand = False
               }
             , Cmd.none
@@ -117,16 +120,24 @@ update msg model =
                 ( drawnCard, newDeck ) =
                     Deck.draw model.deck
 
+                dealer =
+                    Tuple.first model.players
+
+                player =
+                    Tuple.second model.players
+
                 playerCards =
-                    List.append model.playerHand [ drawnCard ]
+                    List.append player.hand [ drawnCard ]
 
                 playerScore =
                     score (Deck.newDeck playerCards)
             in
             ( { model
                 | deck = newDeck
-                , playerHand = playerCards
-                , playerScore = playerScore
+                , players =
+                    ( dealer
+                    , { hand = playerCards, score = playerScore }
+                    )
               }
             , Cmd.none
             )
@@ -143,9 +154,16 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
+    let
+        dealer =
+            Tuple.first model.players
+
+        player =
+            Tuple.second model.players
+    in
     div []
-        [ viewHand "Dealer's hand:" model.dealerHand { hideFirstCard = model.stand == False }
-        , viewHand "Your hand:" model.playerHand { hideFirstCard = False }
+        [ viewHand "Dealer's hand:" dealer { hideFirstCard = model.stand == False }
+        , viewHand "Your hand:" player { hideFirstCard = False }
         , viewControls model
         ]
 
@@ -154,25 +172,25 @@ type alias ViewHandOpts =
     { hideFirstCard : Bool }
 
 
-viewHand : String -> Hand -> ViewHandOpts -> Html Msg
-viewHand player hand opts =
+viewHand : String -> Player -> ViewHandOpts -> Html Msg
+viewHand label player opts =
     let
         backCard =
             [ Cards.defaultNew Cards.Back "back" 0 ]
 
         cards =
             if opts.hideFirstCard == True then
-                backCard ++ List.drop 1 hand
+                backCard ++ List.drop 1 player.hand
 
             else
-                hand
+                player.hand
     in
-    if List.isEmpty hand then
+    if List.isEmpty player.hand then
         text ""
 
     else
         div []
-            [ text player
+            [ text (label ++ " (score: " ++ String.fromInt player.score ++ ")")
             , div [] (List.map viewCard cards)
             ]
 
@@ -186,10 +204,14 @@ viewCard card =
 
 viewControls : Model -> Html Msg
 viewControls model =
+    let
+        dealer =
+            Tuple.first model.players
+    in
     if model.stand == True then
         div [] [ button [ onClick Deal ] [ text "Deal" ] ]
 
-    else if List.isEmpty model.dealerHand == True then
+    else if List.isEmpty dealer.hand == True then
         div [] [ button [ onClick Deal ] [ text "Deal" ] ]
 
     else
