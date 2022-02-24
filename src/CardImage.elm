@@ -45,7 +45,7 @@ resolveFace face =
       "9"
 
     Cards.Ten ->
-      "10"
+      "0"
 
     Cards.Jack ->
       "J"
