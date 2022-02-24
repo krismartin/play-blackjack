@@ -2,68 +2,74 @@ module CardImage exposing (url)
 
 import Cards
 
+
 resolveSuit : Cards.Suit -> String
 resolveSuit suit =
-  case suit of
-    Cards.Spades ->
-      "S"
-    Cards.Hearts ->
-      "H"
-    Cards.Diamonds ->
-      "D"
-    Cards.Clubs ->
-      "C"
+    case suit of
+        Cards.Spades ->
+            "S"
+
+        Cards.Hearts ->
+            "H"
+
+        Cards.Diamonds ->
+            "D"
+
+        Cards.Clubs ->
+            "C"
+
 
 resolveFace : Cards.Face -> String
 resolveFace face =
-  case face of
-    Cards.Ace ->
-      "A"
+    case face of
+        Cards.Ace ->
+            "A"
 
-    Cards.Two ->
-      "2"
+        Cards.Two ->
+            "2"
 
-    Cards.Three ->
-      "3"
+        Cards.Three ->
+            "3"
 
-    Cards.Four ->
-      "4"
+        Cards.Four ->
+            "4"
 
-    Cards.Five ->
-      "5"
+        Cards.Five ->
+            "5"
 
-    Cards.Six ->
-      "6"
+        Cards.Six ->
+            "6"
 
-    Cards.Seven ->
-      "7"
+        Cards.Seven ->
+            "7"
 
-    Cards.Eight ->
-      "8"
+        Cards.Eight ->
+            "8"
 
-    Cards.Nine ->
-      "9"
+        Cards.Nine ->
+            "9"
 
-    Cards.Ten ->
-      "0"
+        Cards.Ten ->
+            "0"
 
-    Cards.Jack ->
-      "J"
+        Cards.Jack ->
+            "J"
 
-    Cards.Queen ->
-      "Q"
+        Cards.Queen ->
+            "Q"
 
-    Cards.King ->
-      "K"
+        Cards.King ->
+            "K"
+
 
 url : Cards.Card -> String
 url card =
-  case card of
-      Cards.Card suit face ->
-        "https://deckofcardsapi.com/static/img/"
-          ++ resolveFace face
-          ++ resolveSuit suit
-          ++ ".png"
+    case card of
+        Cards.Card suit face ->
+            "https://deckofcardsapi.com/static/img/"
+                ++ resolveFace face
+                ++ resolveSuit suit
+                ++ ".png"
 
-      Cards.Back ->
-        "https://deckofcardsapi.com/static/img/back.png"
+        Cards.Back ->
+            "https://deckofcardsapi.com/static/img/back.png"
