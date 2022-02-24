@@ -5,13 +5,20 @@ import Cards
 import CardImage
 import Deck
 import Games.Blackjack exposing (score)
-import Html exposing (Html, button, div, img, text)
+import Html exposing (Html, button, div, img, span, text)
 import Html.Attributes exposing (src)
 import Html.Events exposing (onClick)
+import Random
 
 -- MAIN
+main : Program () Model Msg
 main =
-  Browser.sandbox { init = init, update = update, view = view }
+  Browser.element
+    { init = \_ -> (initialModel, Random.generate ShuffleDeck Deck.randomDeck)
+    , update = update
+    , view = view
+    , subscriptions = \_ -> Sub.none
+    }
 
 -- MODEL
 
@@ -27,12 +34,9 @@ type alias AppData =
 
 type alias Model = AppData
 
-deck : Deck.ShuffledDeck
-deck = Deck.fullDeck
-
-init : Model
-init =
-  { deck = deck
+initialModel : Model
+initialModel =
+  { deck = Deck.fullDeck
   , dealerHand = []
   , playerHand = []
   , dealerScore = 0
@@ -44,10 +48,12 @@ init =
 
 type Msg =
   Deal
+  | ShuffleDeck Deck.ShuffledDeck
   | Hit
   | Stand
+  | Noop
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
     Deal ->
@@ -61,26 +67,36 @@ update msg model =
         playerCards = [ drawnCard3, drawnCard4 ]
         playerScore = score(Deck.newDeck playerCards)
       in
-        { model |
-          deck = newDeck4
-          , dealerHand = dealerCards
-          , playerHand = playerCards
-          , dealerScore = dealerScore
-          , playerScore = playerScore
-        }
+        (
+          { model |
+            deck = newDeck4
+            , dealerHand = dealerCards
+            , playerHand = playerCards
+            , dealerScore = dealerScore
+            , playerScore = playerScore
+          }
+          , Cmd.none
+        )
+    ShuffleDeck deck ->
+      ( { model | deck = deck } , Cmd.none )
     Hit ->
       let
         (drawnCard, newDeck) = Deck.draw model.deck
         playerCards = List.append model.playerHand [ drawnCard ]
         playerScore = score(Deck.newDeck playerCards)
       in
-        { model |
-          deck = newDeck
-          , playerHand = playerCards
-          , playerScore = playerScore
-        }
+        (
+          { model |
+            deck = newDeck
+            , playerHand = playerCards
+            , playerScore = playerScore
+          }
+          , Cmd.none
+        )
     Stand ->
-      model
+      ( model, Cmd.none )
+    Noop ->
+      ( model, Cmd.none )
 
 
 -- VIEW
@@ -109,12 +125,14 @@ viewHand player hand =
       div []
         [
           text (player ++ "'s hand:")
-          , div[] (List.map viewCard cards)
+          , div [] (List.map viewCard cards)
         ]
 
 viewCard : Cards.Card -> Html Msg
 viewCard card =
-  img [ src (CardImage.url card) ] []
+  span [] [
+    img [ src (CardImage.url card) ] []
+  ]
 
 viewControls : Model -> Html Msg
 viewControls model =
