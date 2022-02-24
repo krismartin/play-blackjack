@@ -34,7 +34,8 @@ type alias Hand =
 
 
 type alias Player =
-    { hand : Hand
+    { dealer : Bool
+    , hand : Hand
     , score : Int
     }
 
@@ -55,8 +56,8 @@ initialModel =
     { deck = Deck.fullDeck
     , stand = False
     , players =
-        ( { hand = [], score = 0 }
-        , { hand = [], score = 0 }
+        ( { dealer = True, hand = [], score = 0 }
+        , { dealer = False, hand = [], score = 0 }
         )
     }
 
@@ -104,8 +105,8 @@ update msg model =
             ( { model
                 | deck = newDeck4
                 , players =
-                    ( { hand = dealerCards, score = dealerScore }
-                    , { hand = playerCards, score = playerScore }
+                    ( { dealer = True, hand = dealerCards, score = dealerScore }
+                    , { dealer = False, hand = playerCards, score = playerScore }
                     )
                 , stand = False
               }
@@ -136,7 +137,7 @@ update msg model =
                 | deck = newDeck
                 , players =
                     ( dealer
-                    , { hand = playerCards, score = playerScore }
+                    , { dealer = False, hand = playerCards, score = playerScore }
                     )
               }
             , Cmd.none
@@ -162,24 +163,20 @@ view model =
             Tuple.second model.players
     in
     div []
-        [ viewHand "Dealer's hand:" dealer { hideFirstCard = model.stand == False }
-        , viewHand "Your hand:" player { hideFirstCard = False }
+        [ viewHand "Dealer's hand:" dealer
+        , viewHand "Your hand:" player
         , viewControls model
         ]
 
 
-type alias ViewHandOpts =
-    { hideFirstCard : Bool }
-
-
-viewHand : String -> Player -> ViewHandOpts -> Html Msg
-viewHand label player opts =
+viewHand : String -> Player -> Html Msg
+viewHand label player =
     let
         backCard =
             [ Cards.defaultNew Cards.Back "back" 0 ]
 
         cards =
-            if opts.hideFirstCard == True then
+            if player.dealer == True then
                 backCard ++ List.drop 1 player.hand
 
             else
