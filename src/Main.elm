@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Cards
+import CardImage
 import Deck
 import Games.Blackjack exposing (score)
 import Html exposing (Html, button, div, img, text)
@@ -111,74 +112,9 @@ viewHand player hand =
           , div[] (List.map viewCard cards)
         ]
 
-resolveSuit : Cards.Suit -> String
-resolveSuit suit =
-  case suit of
-    Cards.Spades ->
-      "S"
-    Cards.Hearts ->
-      "H"
-    Cards.Diamonds ->
-      "D"
-    Cards.Clubs ->
-      "C"
-
-resolveFace : Cards.Face -> String
-resolveFace face =
-  case face of
-    Cards.Ace ->
-      "A"
-
-    Cards.Two ->
-      "2"
-
-    Cards.Three ->
-      "3"
-
-    Cards.Four ->
-      "4"
-
-    Cards.Five ->
-      "5"
-
-    Cards.Six ->
-      "6"
-
-    Cards.Seven ->
-      "7"
-
-    Cards.Eight ->
-      "8"
-
-    Cards.Nine ->
-      "9"
-
-    Cards.Ten ->
-      "10"
-
-    Cards.Jack ->
-      "J"
-
-    Cards.Queen ->
-      "Q"
-
-    Cards.King ->
-      "K"
-
 viewCard : Cards.Card -> Html Msg
 viewCard card =
-  case card of
-      Cards.Card suit face ->
-        let
-          imageUrl = "https://deckofcardsapi.com/static/img/"
-            ++ resolveFace face
-            ++ resolveSuit suit
-            ++ ".png"
-        in
-          img [ src imageUrl ] []
-
-      Cards.Back ->
-        img [ src "https://deckofcardsapi.com/static/img/back.png" ] []
+  img [ src (CardImage.url card) ] []
 
 viewControls : Model -> Html Msg
 viewControls model =
@@ -189,5 +125,3 @@ viewControls model =
       [ button [onClick Hit ] [ text "Hit"]
       , button [onClick Stand ] [ text "Stand"]
       ]
-
-
