@@ -134,8 +134,15 @@ update msg model =
 
                     else
                         ( model.phase, model.winner )
+
+                nextCmd =
+                    if nextPhase == Ended then
+                        Random.generate ShuffleDeck Deck.randomDeck
+
+                    else
+                        Cmd.none
             in
-            ( { model | phase = nextPhase, winner = nextWinner }, Cmd.none )
+            ( { model | phase = nextPhase, winner = nextWinner }, nextCmd )
 
         Deal ->
             let
@@ -173,6 +180,7 @@ update msg model =
                     , { player | hand = playerCards, score = playerScore }
                     )
                 , phase = PlayerDeal
+                , winner = Nothing
               }
             , Cmd.none
             )
@@ -208,9 +216,7 @@ update msg model =
                 |> Update.Extra.andThen update CheckScores
 
         Stand ->
-            ( { model | phase = PlayerStand }
-            , Random.generate ShuffleDeck Deck.randomDeck
-            )
+            ( { model | phase = PlayerStand }, Cmd.none )
                 |> Update.Extra.andThen update CheckScores
 
 
