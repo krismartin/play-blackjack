@@ -280,15 +280,12 @@ viewHand label player phase =
         El.none
 
     else
-        El.row [ El.padding 40, El.centerX ]
-            [ El.row [] (List.map viewCard cards) ]
+        El.row [ El.padding 40, El.centerX ] (List.map viewCard cards)
 
 
 viewCard : Cards.Card -> Element Msg
 viewCard card =
-    El.row [ El.paddingEach { top = 0, right = 10, bottom = 0, left = 0 } ]
-        [ El.image [] { description = "", src = CardImage.url card }
-        ]
+    El.image [ El.paddingEach { top = 0, right = 10, bottom = 0, left = 0 } ] { description = "", src = CardImage.url card }
 
 
 viewWinner : Winner -> ( Player, Player ) -> Element Msg
