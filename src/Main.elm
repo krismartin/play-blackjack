@@ -4,11 +4,13 @@ import Browser
 import CardImage
 import Cards
 import Deck
+import Element as El exposing (Element)
+import Element.Background as Background
+import Element.Font as Font
+import Element.Input as Input
 import Games.Blackjack exposing (score)
-import Html exposing (Html, button, div, img, span, text)
-import Html.Attributes exposing (src)
-import Html.Events exposing (onClick)
 import Random
+import Theme exposing (theme)
 import Update.Extra
 
 
@@ -18,7 +20,7 @@ import Update.Extra
 
 main : Program () Model Msg
 main =
-    Browser.element
+    Browser.document
         { init = \_ -> ( initialModel, Random.generate ShuffleDeck Deck.randomDeck )
         , update = update
         , view = view
@@ -224,7 +226,7 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
     let
         _ =
@@ -233,15 +235,28 @@ view model =
         ( dealer, player ) =
             model.players
     in
-    div []
-        [ viewHand "Dealer's hand:" dealer model.phase
-        , viewWinner model.winner
-        , viewHand "Your hand:" player model.phase
-        , viewControls model
+    { title = "Play Blackjack"
+    , body =
+        [ El.layout
+            [ Background.gradient { angle = 3.1, steps = [ El.rgb255 26 74 28, El.rgb255 48 136 52 ] }
+            , Font.family theme.fontFamily
+            ]
+            (El.column
+                [ El.height El.fill
+                , El.centerX
+                , El.centerY
+                ]
+                [ viewHand "Dealer's hand:" dealer model.phase
+                , viewWinner model.winner model.players
+                , viewHand "Your hand:" player model.phase
+                , viewControls model
+                ]
+            )
         ]
+    }
 
 
-viewHand : String -> Player -> Phase -> Html Msg
+viewHand : String -> Player -> Phase -> Element Msg
 viewHand label player phase =
     let
         backCard =
@@ -262,44 +277,59 @@ viewHand label player phase =
                 player.hand
     in
     if List.isEmpty player.hand then
-        text ""
+        El.none
 
     else
-        div []
-            [ text (label ++ " (score: " ++ String.fromInt player.score ++ ")")
-            , div [] (List.map viewCard cards)
-            ]
+        El.row [ El.padding 40, El.centerX ]
+            [ El.row [] (List.map viewCard cards) ]
 
 
-viewCard : Cards.Card -> Html Msg
+viewCard : Cards.Card -> Element Msg
 viewCard card =
-    span []
-        [ img [ src (CardImage.url card) ] []
+    El.row [ El.paddingEach { top = 0, right = 10, bottom = 0, left = 0 } ]
+        [ El.image [] { description = "", src = CardImage.url card }
         ]
 
 
-viewWinner : Winner -> Html Msg
-viewWinner winner =
-    if winner == Bettor then
-        div [] [ text "You won!" ]
+viewWinner : Winner -> ( Player, Player ) -> Element Msg
+viewWinner winner ( dealer, player ) =
+    let
+        styles =
+            { playerWin = [ Background.color (El.rgb255 255 234 0) ]
+            , dealerWin = [ Background.color (El.rgb255 210 55 55), Font.color (El.rgb255 255 255 255) ]
+            , draw = [ Background.color (El.rgb255 23 175 34) ]
+            }
 
-    else if winner == Dealer then
-        div [] [ text "Dealer wins" ]
+        ( style, text ) =
+            if winner == Bettor then
+                ( styles.playerWin, "You win!" )
 
-    else if winner == Draw then
-        div [] [ text "Draw" ]
+            else if winner == Dealer then
+                ( styles.dealerWin, "Dealer wins" )
+
+            else if winner == Draw then
+                ( styles.draw, "Draw" )
+
+            else
+                ( [], "" )
+    in
+    if text == "" then
+        El.none
 
     else
-        text ""
+        El.row
+            (Theme.notice ++ style)
+            [ El.text text ]
 
 
-viewControls : Model -> Html Msg
+viewControls : Model -> Element Msg
 viewControls model =
     if model.phase == Waiting || model.phase == Ended then
-        div [] [ button [ onClick Deal ] [ text "Deal" ] ]
+        El.row [ El.padding 20, El.centerX ] [ Input.button Theme.button { label = El.text "Deal", onPress = Just Deal } ]
 
     else
-        div []
-            [ button [ onClick Hit ] [ text "Hit" ]
-            , button [ onClick Stand ] [ text "Stand" ]
+        El.row [ El.padding 20, El.centerX ]
+            [ Input.button Theme.button { label = El.text "Hit", onPress = Just Hit }
+            , El.text "   "
+            , Input.button Theme.button { label = El.text "Stand", onPress = Just Stand }
             ]
