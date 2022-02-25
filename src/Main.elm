@@ -40,10 +40,19 @@ type alias Player =
     }
 
 
+type Phase
+    = Waiting
+    | PlayerDeal
+    | PlayerHit
+    | PlayerStand
+    | DealerWin
+    | PlayerWin
+
+
 type alias AppData =
     { deck : Deck.ShuffledDeck
-    , stand : Bool
     , players : ( Player, Player )
+    , phase : Phase
     }
 
 
@@ -54,7 +63,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { deck = Deck.fullDeck
-    , stand = False
+    , phase = Waiting
     , players =
         ( { dealer = True, hand = [], score = 0 }
         , { dealer = False, hand = [], score = 0 }
@@ -101,14 +110,17 @@ update msg model =
 
                 playerScore =
                     score (Deck.newDeck playerCards)
+
+                ( dealer, player ) =
+                    model.players
             in
             ( { model
                 | deck = newDeck4
                 , players =
-                    ( { dealer = True, hand = dealerCards, score = dealerScore }
-                    , { dealer = False, hand = playerCards, score = playerScore }
+                    ( { dealer | dealer = True, hand = dealerCards, score = dealerScore }
+                    , { player | hand = playerCards, score = playerScore }
                     )
-                , stand = False
+                , phase = PlayerDeal
               }
             , Cmd.none
             )
@@ -121,30 +133,28 @@ update msg model =
                 ( drawnCard, newDeck ) =
                     Deck.draw model.deck
 
-                dealer =
-                    Tuple.first model.players
-
-                player =
-                    Tuple.second model.players
-
                 playerCards =
                     List.append player.hand [ drawnCard ]
 
                 playerScore =
                     score (Deck.newDeck playerCards)
+
+                ( dealer, player ) =
+                    model.players
             in
             ( { model
                 | deck = newDeck
                 , players =
                     ( dealer
-                    , { dealer = False, hand = playerCards, score = playerScore }
+                    , { player | hand = playerCards, score = playerScore }
                     )
+                , phase = PlayerHit
               }
             , Cmd.none
             )
 
         Stand ->
-            ( { model | stand = True }
+            ( { model | phase = PlayerStand }
             , Random.generate ShuffleDeck Deck.randomDeck
             )
 
@@ -156,27 +166,30 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-        dealer =
-            Tuple.first model.players
+        _ =
+            Debug.log "Phase" model.phase
 
-        player =
-            Tuple.second model.players
+        ( dealer, player ) =
+            model.players
     in
     div []
-        [ viewHand "Dealer's hand:" dealer
-        , viewHand "Your hand:" player
+        [ viewHand "Dealer's hand:" dealer model.phase
+        , viewHand "Your hand:" player model.phase
         , viewControls model
         ]
 
 
-viewHand : String -> Player -> Html Msg
-viewHand label player =
+viewHand : String -> Player -> Phase -> Html Msg
+viewHand label player phase =
     let
         backCard =
             [ Cards.defaultNew Cards.Back "back" 0 ]
 
+        hideFirstCard =
+            player.dealer == True && phase /= PlayerStand
+
         cards =
-            if player.dealer == True then
+            if hideFirstCard then
                 backCard ++ List.drop 1 player.hand
 
             else
@@ -201,14 +214,7 @@ viewCard card =
 
 viewControls : Model -> Html Msg
 viewControls model =
-    let
-        dealer =
-            Tuple.first model.players
-    in
-    if model.stand == True then
-        div [] [ button [ onClick Deal ] [ text "Deal" ] ]
-
-    else if List.isEmpty dealer.hand == True then
+    if model.phase == Waiting || model.phase == PlayerStand then
         div [] [ button [ onClick Deal ] [ text "Deal" ] ]
 
     else
