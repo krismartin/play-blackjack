@@ -9,6 +9,7 @@ import Html exposing (Html, button, div, img, span, text)
 import Html.Attributes exposing (src)
 import Html.Events exposing (onClick)
 import Random
+import Update.Extra
 
 
 
@@ -45,14 +46,21 @@ type Phase
     | PlayerDeal
     | PlayerHit
     | PlayerStand
-    | DealerWin
-    | PlayerWin
+    | Ended
+
+
+type Winner
+    = Dealer
+    | Bettor
+    | Draw
+    | Nothing
 
 
 type alias AppData =
     { deck : Deck.ShuffledDeck
     , players : ( Player, Player )
     , phase : Phase
+    , winner : Winner
     }
 
 
@@ -68,6 +76,7 @@ initialModel =
         ( { dealer = True, hand = [], score = 0 }
         , { dealer = False, hand = [], score = 0 }
         )
+    , winner = Nothing
     }
 
 
@@ -78,6 +87,7 @@ initialModel =
 type Msg
     = Deal
     | ShuffleDeck Deck.ShuffledDeck
+    | CheckScores
     | Hit
     | Stand
 
@@ -85,6 +95,48 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        CheckScores ->
+            let
+                ( dealer, player ) =
+                    model.players
+
+                dealerScore =
+                    dealer.score
+
+                playerScore =
+                    player.score
+
+                ( nextPhase, nextWinner ) =
+                    if playerScore == 21 then
+                        ( Ended, Bettor )
+
+                    else if dealerScore == 21 then
+                        ( Ended, Dealer )
+
+                    else if playerScore > 21 then
+                        ( Ended, Dealer )
+
+                    else if dealerScore > 21 then
+                        ( Ended, Bettor )
+
+                    else if model.phase == PlayerStand then
+                        if playerScore > dealerScore then
+                            ( Ended, Bettor )
+
+                        else if dealerScore > playerScore then
+                            ( Ended, Dealer )
+
+                        else if dealerScore == playerScore then
+                            ( Ended, Draw )
+
+                        else
+                            ( model.phase, model.winner )
+
+                    else
+                        ( model.phase, model.winner )
+            in
+            ( { model | phase = nextPhase, winner = nextWinner }, Cmd.none )
+
         Deal ->
             let
                 ( drawnCard1, newDeck ) =
@@ -124,6 +176,7 @@ update msg model =
               }
             , Cmd.none
             )
+                |> Update.Extra.andThen update CheckScores
 
         ShuffleDeck deck ->
             ( { model | deck = deck }, Cmd.none )
@@ -152,11 +205,13 @@ update msg model =
               }
             , Cmd.none
             )
+                |> Update.Extra.andThen update CheckScores
 
         Stand ->
             ( { model | phase = PlayerStand }
             , Random.generate ShuffleDeck Deck.randomDeck
             )
+                |> Update.Extra.andThen update CheckScores
 
 
 
@@ -174,6 +229,7 @@ view model =
     in
     div []
         [ viewHand "Dealer's hand:" dealer model.phase
+        , viewWinner model.winner
         , viewHand "Your hand:" player model.phase
         , viewControls model
         ]
@@ -186,7 +242,11 @@ viewHand label player phase =
             [ Cards.defaultNew Cards.Back "back" 0 ]
 
         hideFirstCard =
-            player.dealer == True && phase /= PlayerStand
+            if phase == PlayerStand || phase == Ended then
+                False
+
+            else
+                player.dealer
 
         cards =
             if hideFirstCard then
@@ -212,9 +272,24 @@ viewCard card =
         ]
 
 
+viewWinner : Winner -> Html Msg
+viewWinner winner =
+    if winner == Bettor then
+        div [] [ text "You won!" ]
+
+    else if winner == Dealer then
+        div [] [ text "Dealer wins" ]
+
+    else if winner == Draw then
+        div [] [ text "Draw" ]
+
+    else
+        text ""
+
+
 viewControls : Model -> Html Msg
 viewControls model =
-    if model.phase == Waiting || model.phase == PlayerStand then
+    if model.phase == Waiting || model.phase == Ended then
         div [] [ button [ onClick Deal ] [ text "Deal" ] ]
 
     else
