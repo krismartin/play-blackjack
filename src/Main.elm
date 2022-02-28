@@ -70,6 +70,11 @@ type alias Model =
     AppData
 
 
+maxScore : Int
+maxScore =
+    21
+
+
 initialModel : Model
 initialModel =
     { deck = Deck.fullDeck
@@ -92,6 +97,7 @@ type Msg
     | CheckScores
     | Hit
     | Stand
+    | DealerDraw
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -109,26 +115,37 @@ update msg model =
                     player.score
 
                 ( nextPhase, nextWinner ) =
-                    if playerScore == 21 then
+                    if playerScore == maxScore then
+                        -- Player scores blackjack
                         ( Ended, Bettor )
 
-                    else if dealerScore == 21 then
+                    else if dealerScore == maxScore then
+                        -- Dealer scores blackjack
                         ( Ended, Dealer )
 
-                    else if playerScore > 21 then
+                    else if playerScore > maxScore then
+                        -- Player busted
                         ( Ended, Dealer )
 
-                    else if dealerScore > 21 then
+                    else if dealerScore > maxScore then
+                        -- Dealer busted
                         ( Ended, Bettor )
 
                     else if model.phase == PlayerStand then
-                        if playerScore > dealerScore then
+                        if dealerScore < 17 then
+                            -- Draw another card to the dealer's hand
+                            ( model.phase, model.winner )
+
+                        else if playerScore > dealerScore then
+                            -- Player wins
                             ( Ended, Bettor )
 
                         else if dealerScore > playerScore then
+                            -- Dealer wins
                             ( Ended, Dealer )
 
                         else if dealerScore == playerScore then
+                            -- It's a draw
                             ( Ended, Draw )
 
                         else
@@ -145,6 +162,8 @@ update msg model =
                         Cmd.none
             in
             ( { model | phase = nextPhase, winner = nextWinner }, nextCmd )
+                |> Update.Extra.filter (nextPhase == PlayerStand)
+                    (Update.Extra.andThen update DealerDraw)
 
         Deal ->
             let
@@ -221,6 +240,29 @@ update msg model =
             ( { model | phase = PlayerStand }, Cmd.none )
                 |> Update.Extra.andThen update CheckScores
 
+        DealerDraw ->
+            let
+                ( dealer, player ) =
+                    model.players
+
+                ( drawnCard, nextDeck ) =
+                    Deck.draw model.deck
+
+                dealerCards =
+                    List.append dealer.hand [ drawnCard ]
+
+                dealerScore =
+                    score (Deck.newDeck dealerCards)
+
+                drawAnotherCard =
+                    model.phase == PlayerStand && dealerScore < 17
+            in
+            ( { model | players = ( { dealer | hand = dealerCards, score = dealerScore }, player ), deck = nextDeck }, Cmd.none )
+                |> Update.Extra.filter (drawAnotherCard == True)
+                    (Update.Extra.andThen update Stand)
+                |> Update.Extra.filter (drawAnotherCard == False)
+                    (Update.Extra.andThen update CheckScores)
+
 
 
 -- VIEW
@@ -229,9 +271,6 @@ update msg model =
 view : Model -> Browser.Document Msg
 view model =
     let
-        _ =
-            Debug.log "Phase" model.phase
-
         ( dealer, player ) =
             model.players
     in
