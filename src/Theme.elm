@@ -17,10 +17,6 @@ type alias Theme =
         }
     , fontColor : El.Color
     , fontFamily : List Font.Font
-    , notice :
-        { radius : Int
-        , paddingEach : { top : Int, right : Int, bottom : Int, left : Int }
-        }
     }
 
 
@@ -39,10 +35,6 @@ theme =
         [ Font.typeface "Helvetica"
         , Font.serif
         ]
-    , notice =
-        { radius = 5
-        , paddingEach = { top = 15, right = 25, bottom = 15, left = 25 }
-        }
     }
 
 
@@ -53,12 +45,4 @@ button =
     , Font.color theme.button.fontColor
     , Border.rounded theme.button.radius
     , El.mouseOver [ Font.color theme.button.hoverFontColor ]
-    ]
-
-
-notice : List (El.Attribute msg)
-notice =
-    [ El.paddingEach theme.notice.paddingEach
-    , Border.rounded theme.button.radius
-    , El.centerX
     ]

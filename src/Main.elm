@@ -6,9 +6,11 @@ import Cards
 import Deck
 import Element as El exposing (Element)
 import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Games.Blackjack exposing (score)
+import Html.Attributes
 import Random
 import Theme exposing (theme)
 import Update.Extra
@@ -277,17 +279,19 @@ view model =
     { title = "Play Blackjack"
     , body =
         [ El.layout
-            [ Background.gradient { angle = 3.1, steps = [ El.rgb255 26 74 28, El.rgb255 48 136 52 ] }
+            [ El.htmlAttribute (Html.Attributes.style "background" "url(./public/assets/bg.png) no-repeat center #005b13")
             , Font.family theme.fontFamily
+            , El.width El.fill
+            , El.height El.fill
             ]
             (El.column
                 [ El.height El.fill
                 , El.centerX
                 , El.centerY
                 ]
-                [ viewHand "Dealer's hand:" dealer model.phase
+                [ viewHand dealer model.phase
                 , viewWinner model.winner model.players
-                , viewHand "Your hand:" player model.phase
+                , viewHand player model.phase
                 , viewControls model
                 ]
             )
@@ -295,8 +299,8 @@ view model =
     }
 
 
-viewHand : String -> Player -> Phase -> Element Msg
-viewHand label player phase =
+viewHand : Player -> Phase -> Element Msg
+viewHand player phase =
     let
         backCard =
             [ Cards.defaultNew Cards.Back "back" 0 ]
@@ -314,58 +318,108 @@ viewHand label player phase =
 
             else
                 player.hand
+
+        verticalAlignment =
+            if player.dealer then
+                "center"
+
+            else
+                "flex-end"
     in
     if List.isEmpty player.hand then
-        El.none
+        El.row
+            [ El.height El.fill ]
+            []
 
     else
-        El.row [ El.padding 40, El.centerX ] (List.map viewCard cards)
+        El.row
+            [ El.height El.fill
+            , El.padding 40
+            , El.centerX
+            , El.htmlAttribute (Html.Attributes.style "align-items" verticalAlignment)
+            ]
+            (List.map viewCard cards)
 
 
 viewCard : Cards.Card -> Element Msg
 viewCard card =
-    El.image [ El.paddingEach { top = 0, right = 10, bottom = 0, left = 0 } ] { description = "", src = CardImage.url card }
+    El.image
+        [ El.paddingEach { top = 0, right = 10, bottom = 0, left = 0 }
+        , El.height (El.px 180)
+        ]
+        { description = "", src = CardImage.url card }
 
 
 viewWinner : Winner -> ( Player, Player ) -> Element Msg
 viewWinner winner ( dealer, player ) =
     let
-        styles =
+        colors =
             { playerWin = [ Background.color (El.rgb255 255 234 0) ]
             , dealerWin = [ Background.color (El.rgb255 210 55 55), Font.color (El.rgb255 255 255 255) ]
             , draw = [ Background.color (El.rgb255 23 175 34) ]
             }
 
-        ( style, text ) =
+        ( color, text ) =
             if winner == Bettor then
-                ( styles.playerWin, "You win!" )
+                ( colors.playerWin, "You win!" )
 
             else if winner == Dealer then
-                ( styles.dealerWin, "Dealer wins" )
+                ( colors.dealerWin, "Dealer wins" )
 
             else if winner == Draw then
-                ( styles.draw, "Draw" )
+                ( colors.draw, "Draw" )
 
             else
                 ( [], "" )
+
+        styles =
+            color
+                ++ [ El.htmlAttribute (Html.Attributes.style "margin" "0 auto")
+                   , El.padding 20
+                   , Border.rounded theme.button.radius
+                   ]
     in
     if text == "" then
-        El.none
+        El.row
+            [ El.width El.fill
+            , El.htmlAttribute (Html.Attributes.style "min-height" "180px")
+            , El.htmlAttribute (Html.Attributes.style "align-items" "flex-start")
+            ]
+            []
 
     else
         El.row
-            (Theme.notice ++ style)
-            [ El.text text ]
+            [ El.width El.fill
+            , El.height El.fill
+            , El.centerX
+            , El.htmlAttribute (Html.Attributes.style "min-height" "180px")
+            , El.htmlAttribute (Html.Attributes.style "align-items" "flex-start")
+            ]
+            [ El.el styles (El.text text) ]
 
 
 viewControls : Model -> Element Msg
 viewControls model =
     if model.phase == Waiting || model.phase == Ended then
-        El.row [ El.padding 20, El.centerX ] [ Input.button Theme.button { label = El.text "Deal", onPress = Just Deal } ]
+        El.row
+            [ El.height El.fill
+            , El.paddingEach { top = 0, right = 0, bottom = 40, left = 0 }
+            , El.centerX
+            , El.htmlAttribute (Html.Attributes.style "align-items" "flex-end")
+            , El.htmlAttribute (Html.Attributes.style "max-height" "80px")
+            ]
+            [ Input.button Theme.button { label = El.text "Deal", onPress = Just Deal }
+            ]
 
     else
-        El.row [ El.padding 20, El.centerX ]
+        El.row
+            [ El.height El.fill
+            , El.paddingEach { top = 0, right = 0, bottom = 40, left = 0 }
+            , El.centerX
+            , El.htmlAttribute (Html.Attributes.style "align-items" "flex-end")
+            , El.htmlAttribute (Html.Attributes.style "max-height" "80px")
+            ]
             [ Input.button Theme.button { label = El.text "Hit", onPress = Just Hit }
-            , El.text "   "
+            , El.el [ El.paddingEach { top = 0, right = 20, bottom = 0, left = 0 } ] El.none
             , Input.button Theme.button { label = El.text "Stand", onPress = Just Stand }
             ]
