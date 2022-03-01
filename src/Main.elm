@@ -361,10 +361,25 @@ viewWinner winner ( dealer, player ) =
 
         ( color, text ) =
             if winner == Bettor then
-                ( colors.playerWin, "You win!" )
+                ( colors.playerWin
+                , if player.score == maxScore then
+                    "Blackjack!"
+
+                  else
+                    "You win!"
+                )
 
             else if winner == Dealer then
-                ( colors.dealerWin, "Dealer wins" )
+                ( colors.dealerWin
+                , if dealer.score == maxScore then
+                    "Dealer wins (Blackjack)"
+
+                  else if player.score > maxScore then
+                    "Busted"
+
+                  else
+                    "Dealer wins"
+                )
 
             else if winner == Draw then
                 ( colors.draw, "Draw" )
@@ -400,6 +415,10 @@ viewWinner winner ( dealer, player ) =
 
 viewControls : Model -> Element Msg
 viewControls model =
+    let
+        player =
+            Tuple.first model.players
+    in
     if model.phase == Waiting || model.phase == Ended then
         El.row
             [ El.height El.fill
@@ -413,13 +432,15 @@ viewControls model =
 
     else
         El.row
-            [ El.height El.fill
+            [ El.width El.fill
+            , El.height El.fill
             , El.paddingEach { top = 0, right = 0, bottom = 40, left = 0 }
             , El.centerX
+            , El.htmlAttribute (Html.Attributes.style "justify-content" "center")
             , El.htmlAttribute (Html.Attributes.style "align-items" "flex-end")
             , El.htmlAttribute (Html.Attributes.style "max-height" "80px")
             ]
             [ Input.button Theme.button { label = El.text "Hit", onPress = Just Hit }
-            , El.el [ El.paddingEach { top = 0, right = 20, bottom = 0, left = 0 } ] El.none
+            , El.el [ El.paddingEach { top = 0, right = 10, bottom = 0, left = 10 } ] El.none
             , Input.button Theme.button { label = El.text "Stand", onPress = Just Stand }
             ]
