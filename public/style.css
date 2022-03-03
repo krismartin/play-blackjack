@@ -1,6 +1,24 @@
 @font-face {
   font-family: cards;
-  src: url("https://rlbaxter.us/fonts/cards.ttf");
+  src: url("./assets/cards.ttf");
+}
+
+:root {
+  --buttonBg: #04400f;
+  --buttonFontColor: #ffea00;
+  --cardFontFamily: cards;
+  --cardHeight: 250px;
+  --cardWidth: 160px;
+  --casinoTableBg: #005b13;
+  --dealerWin: #d23737;
+  --draw: #17af22;
+  --fontFamily: "Source Sans Pro", sans-serif;
+  --important: #ffea00;
+  --linkColor: #e8e8e8;
+  --linkHoverColor: #ffffff;
+  --playerWin: #ffea00;
+  --playingCardBlack: black;
+  --playingCardRed: firebrick;
 }
 
 @keyframes fold {
@@ -21,7 +39,7 @@
 
 html,
 body {
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--fontFamily);
   height: 100%;
   margin: 0;
   padding: 0;
@@ -30,7 +48,7 @@ body {
 .main {
   align-items: flex-start;
   align-self: center;
-  background-color: #005b13;
+  background-color: var(--casinoTableBg);
   background-image: url(./assets/bg.png);
   background-position: center;
   background-repeat: no-repeat;
@@ -78,7 +96,7 @@ body {
 }
 
 .game-status a {
-  color: rgb(232, 232, 232);
+  color: var(--linkColor);
   display: block;
   font-size: 20px;
   padding-top: 10px;
@@ -89,16 +107,16 @@ body {
 }
 
 .game-status a:hover {
-  color: white;
+  color: var(--linkHoverColor);
 }
 
 button {
-  background-color: #04400f;
+  background-color: var(--buttonBg);
   border-radius: 5px;
   border: none;
-  color: #ffea00;
+  color: var(--buttonFontColor);
   cursor: pointer;
-  font-family: "Source Sans Pro", sans-serif;
+  font-family: var(--fontFamily);
   font-size: 20px;
   padding: 15px 25px;
 }
@@ -108,7 +126,7 @@ button:hover {
 }
 
 .button--important {
-  background-color: #ffea00;
+  background-color: var(--important);
   color: black;
 }
 
@@ -125,12 +143,12 @@ button:hover {
 
 .playing-card label {
   display: inline-block;
-  font-family: cards;
-  height: 250px;
+  font-family: var(--cardFontFamily);
+  height: var(--cardHeight);
   line-height: 1.2;
   position: relative;
   text-transform: uppercase;
-  width: 150px;
+  width: var(--cardWidth);
 }
 
 .playing-card label::before {
@@ -171,11 +189,11 @@ button:hover {
   backface-visibility: hidden;
   border-radius: 8px;
   box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3);
-  height: 250px;
+  height: var(--cardHeight);
   left: 0px;
   position: absolute;
   top: 0px;
-  width: 150px;
+  width: var(--cardWidth);
 }
 
 .playing-card--flip label::before {
@@ -233,9 +251,14 @@ button:hover {
   font-size: 26px;
 }
 
+label[class="♠"] .card-front,
+label[class="♣"] .card-front {
+  color: var(--playingCardBlack);
+}
+
 label[class="♥"] .card-front,
 label[class="♦"] .card-front {
-  color: firebrick;
+  color: var(--playingCardRed);
 }
 
 .card-front::before,
@@ -267,14 +290,14 @@ label[class="♦"] .card-front {
 }
 
 .winner--player {
-  background: #ffea00;
+  background: var(--playerWin);
 }
 
 .winner--dealer {
-  background: #d23737;
+  background: var(--dealerWin);
   color: #ffffff;
 }
 
 .winner--draw {
-  background: #17af22;
+  background: var(--draw);
 }
