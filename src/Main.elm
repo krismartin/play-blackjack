@@ -1,18 +1,14 @@
 module Main exposing (..)
 
 import Browser
-import CardImage
+import CardImage exposing (cardImage)
 import Cards
 import Deck
-import Element as El exposing (Element)
-import Element.Background as Background
-import Element.Border as Border
-import Element.Font as Font
-import Element.Input as Input
 import Games.Blackjack exposing (score)
-import Html.Attributes
+import Html exposing (Html, a, button, div, text)
+import Html.Attributes exposing (class, classList)
+import Html.Events exposing (onClick)
 import Random
-import Theme exposing (theme)
 import Update.Extra
 
 
@@ -22,7 +18,7 @@ import Update.Extra
 
 main : Program () Model Msg
 main =
-    Browser.document
+    Browser.element
         { init = \_ -> ( initialModel, Random.generate ShuffleDeck Deck.randomDeck )
         , update = update
         , view = view
@@ -270,98 +266,104 @@ update msg model =
 -- VIEW
 
 
-view : Model -> Browser.Document Msg
+view : Model -> Html Msg
 view model =
     let
+        { phase, players } =
+            model
+
         ( dealer, player ) =
-            model.players
+            players
     in
-    { title = "Play Blackjack"
-    , body =
-        [ El.layout
-            [ El.htmlAttribute (Html.Attributes.style "background" "url(./public/assets/bg.png) no-repeat center #005b13")
-            , Font.family theme.fontFamily
-            , El.width El.fill
-            , El.height El.fill
-            ]
-            (El.column
-                [ El.height El.fill
-                , El.centerX
-                , El.centerY
-                ]
-                [ viewHand dealer model.phase
-                , viewWinner model.winner model.players
-                , viewHand player model.phase
-                , viewControls model
-                ]
-            )
+    div [ class "main" ]
+        [ viewHand dealer phase
+        , viewGamePanel model
+        , viewHand player phase
         ]
-    }
 
 
-viewHand : Player -> Phase -> Element Msg
+viewGamePanel : AppData -> Html Msg
+viewGamePanel model =
+    let
+        { phase, players } =
+            model
+
+        player =
+            Tuple.second players
+
+        { score } =
+            player
+    in
+    if phase == Waiting then
+        div [ class "game-panel" ]
+            [ div [ class "game-control" ] []
+            , div [ class "game-status" ]
+                [ button [ class "button--important", onClick Deal ] [ text "Start Game" ] ]
+            , div [ class "game-control" ] []
+            ]
+
+    else if phase == Ended then
+        div [ class "game-panel" ]
+            [ div [ class "game-control" ] []
+            , viewWinner model.winner model.players
+            , div [ class "game-control" ] []
+            ]
+
+    else
+        div [ class "game-panel" ]
+            [ div [ class "game-control" ] [ button [ class "button--important", onClick Hit ] [ text "Hit" ] ]
+            , div [ class "game-status" ] []
+            , div [ class "game-control" ] [ button [ onClick Stand ] [ text ("Stand on " ++ String.fromInt score) ] ]
+            ]
+
+
+viewHand : Player -> Phase -> Html Msg
 viewHand player phase =
     let
         backCard =
             [ Cards.defaultNew Cards.Back "back" 0 ]
+
+        { dealer, hand } =
+            player
 
         hideFirstCard =
             if phase == PlayerStand || phase == Ended then
                 False
 
             else
-                player.dealer
+                dealer
 
         cards =
             if hideFirstCard then
-                backCard ++ List.drop 1 player.hand
+                backCard ++ List.drop 1 hand
 
             else
-                player.hand
-
-        verticalAlignment =
-            if player.dealer then
-                "center"
-
-            else
-                "flex-end"
+                hand
     in
-    if List.isEmpty player.hand then
-        El.row
-            [ El.height El.fill ]
-            []
+    if List.isEmpty hand == True then
+        div [ class "player-hand" ] []
 
     else
-        El.row
-            [ El.height El.fill
-            , El.padding 40
-            , El.centerX
-            , El.htmlAttribute (Html.Attributes.style "align-items" verticalAlignment)
-            ]
-            (List.map viewCard cards)
+        div [ class "player-hand" ] (List.map viewCard cards)
 
 
-viewCard : Cards.Card -> Element Msg
+viewCard : Cards.Card -> Html Msg
 viewCard card =
-    El.image
-        [ El.paddingEach { top = 0, right = 10, bottom = 0, left = 0 }
-        , El.height (El.px 180)
-        ]
-        { description = "", src = CardImage.url card }
+    div [] [ cardImage card ]
 
 
-viewWinner : Winner -> ( Player, Player ) -> Element Msg
+viewWinner : Winner -> ( Player, Player ) -> Html Msg
 viewWinner winner ( dealer, player ) =
     let
-        colors =
-            { playerWin = [ Background.color (El.rgb255 255 234 0) ]
-            , dealerWin = [ Background.color (El.rgb255 210 55 55), Font.color (El.rgb255 255 255 255) ]
-            , draw = [ Background.color (El.rgb255 23 175 34) ]
+        classes =
+            { playerWin = "winner--player"
+            , dealerWin = "winner--dealer"
+            , draw = "winner--draw"
             }
 
-        ( color, text ) =
+        ( cssClass, description ) =
             if winner == Bettor then
-                ( colors.playerWin
+                ( classes.playerWin
                 , if player.score == maxScore then
                     "Blackjack!"
 
@@ -370,7 +372,7 @@ viewWinner winner ( dealer, player ) =
                 )
 
             else if winner == Dealer then
-                ( colors.dealerWin
+                ( classes.dealerWin
                 , if dealer.score == maxScore then
                     "Dealer wins (Blackjack)"
 
@@ -382,65 +384,14 @@ viewWinner winner ( dealer, player ) =
                 )
 
             else if winner == Draw then
-                ( colors.draw, "Draw" )
+                ( classes.draw, "Draw" )
 
             else
-                ( [], "" )
-
-        styles =
-            color
-                ++ [ El.htmlAttribute (Html.Attributes.style "margin" "0 auto")
-                   , El.padding 20
-                   , Border.rounded theme.button.radius
-                   ]
+                ( "", "" )
     in
-    if text == "" then
-        El.row
-            [ El.width El.fill
-            , El.htmlAttribute (Html.Attributes.style "min-height" "180px")
-            , El.htmlAttribute (Html.Attributes.style "align-items" "flex-start")
+    div [ class "game-status" ]
+        [ div []
+            [ div [ classList [ ( "winner", True ), ( cssClass, True ) ] ] [ text description ]
+            , a [ onClick Deal ] [ text "Deal again" ]
             ]
-            []
-
-    else
-        El.row
-            [ El.width El.fill
-            , El.height El.fill
-            , El.centerX
-            , El.htmlAttribute (Html.Attributes.style "min-height" "180px")
-            , El.htmlAttribute (Html.Attributes.style "align-items" "flex-start")
-            ]
-            [ El.el styles (El.text text) ]
-
-
-viewControls : Model -> Element Msg
-viewControls model =
-    let
-        player =
-            Tuple.first model.players
-    in
-    if model.phase == Waiting || model.phase == Ended then
-        El.row
-            [ El.height El.fill
-            , El.paddingEach { top = 0, right = 0, bottom = 40, left = 0 }
-            , El.centerX
-            , El.htmlAttribute (Html.Attributes.style "align-items" "flex-end")
-            , El.htmlAttribute (Html.Attributes.style "max-height" "80px")
-            ]
-            [ Input.button Theme.button { label = El.text "Deal", onPress = Just Deal }
-            ]
-
-    else
-        El.row
-            [ El.width El.fill
-            , El.height El.fill
-            , El.paddingEach { top = 0, right = 0, bottom = 40, left = 0 }
-            , El.centerX
-            , El.htmlAttribute (Html.Attributes.style "justify-content" "center")
-            , El.htmlAttribute (Html.Attributes.style "align-items" "flex-end")
-            , El.htmlAttribute (Html.Attributes.style "max-height" "80px")
-            ]
-            [ Input.button Theme.button { label = El.text "Hit", onPress = Just Hit }
-            , El.el [ El.paddingEach { top = 0, right = 10, bottom = 0, left = 10 } ] El.none
-            , Input.button Theme.button { label = El.text "Stand", onPress = Just Stand }
-            ]
+        ]
