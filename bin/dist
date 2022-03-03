@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 elm make src/Main.elm --output=dist/elm.js
 
+rm -rf dist/*
 cp public/index.html dist/index.html
 cp public/style.css dist/style.css
 cp -r public/assets dist/assets
