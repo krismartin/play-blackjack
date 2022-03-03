@@ -298,7 +298,7 @@ viewGamePanel model =
         div [ class "game-panel" ]
             [ div [ class "game-control" ] []
             , div [ class "game-status" ]
-                [ button [ class "button--important", onClick Deal ] [ text "Start Game" ] ]
+                [ button [ class "button--important", onClick Deal ] [ text "Deal" ] ]
             , div [ class "game-control" ] []
             ]
 
