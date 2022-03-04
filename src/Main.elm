@@ -98,14 +98,19 @@ type Msg
     | DealerDraw
 
 
-type alias DrawnCard =
+type alias DealCards =
     { drawnCards : List Cards.Card
     , deck : Deck.ShuffledDeck
     }
 
 
-dealCards : Int -> DrawnCard -> DrawnCard
-dealCards _ state =
+dealCards : Int -> Deck.ShuffledDeck -> DealCards
+dealCards count deck =
+    List.foldl drawCard { deck = deck, drawnCards = [] } (List.repeat count 0)
+
+
+drawCard : Int -> DealCards -> DealCards
+drawCard _ state =
     let
         ( drawnCard, nextDeck ) =
             Deck.draw state.deck
@@ -181,7 +186,7 @@ update msg model =
         Deal ->
             let
                 { drawnCards, deck } =
-                    List.foldr dealCards { deck = model.deck, drawnCards = [] } (List.repeat 4 0)
+                    dealCards 4 model.deck
 
                 dealerCards =
                     List.take 2 drawnCards
