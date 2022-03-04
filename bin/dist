@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-elm make src/Main.elm --output=dist/elm.js
 
 rm -rf dist/*
+
+elm make src/Main.elm --optimize --output=dist/elm.js
+
 cp public/index.html dist/index.html
 cp public/style.css dist/style.css
 cp -r public/assets dist/assets
