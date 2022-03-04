@@ -277,44 +277,38 @@ view model =
     in
     div [ class "main" ]
         [ viewHand dealer phase
-        , viewGamePanel model
+        , viewGameStatus model
         , viewHand player phase
+        , viewPlayerControl phase
         ]
 
 
-viewGamePanel : AppData -> Html Msg
-viewGamePanel model =
+viewPlayerControl : Phase -> Html Msg
+viewPlayerControl phase =
+    if phase == Waiting || phase == Ended then
+        div [ class "player-control" ]
+            [ button [ class "button--important", onClick Deal ] [ text "Deal" ] ]
+
+    else
+        div [ class "player-control" ]
+            [ button [ class "button--important", onClick Hit ] [ text "Hit" ]
+            , button [ onClick Stand ] [ text "Stand" ]
+            ]
+
+
+viewGameStatus : AppData -> Html Msg
+viewGameStatus model =
     let
-        { phase, players } =
+        { phase, winner, players } =
             model
-
-        player =
-            Tuple.second players
-
-        { score } =
-            player
     in
-    if phase == Waiting then
+    if phase == Ended then
         div [ class "game-panel" ]
-            [ div [ class "game-control" ] []
-            , div [ class "game-status" ]
-                [ button [ class "button--important", onClick Deal ] [ text "Deal" ] ]
-            , div [ class "game-control" ] []
-            ]
-
-    else if phase == Ended then
-        div [ class "game-panel" ]
-            [ div [ class "game-control" ] []
-            , viewWinner model.winner model.players
-            , div [ class "game-control" ] []
-            ]
+            [ viewWinner winner players ]
 
     else
         div [ class "game-panel" ]
-            [ div [ class "game-control" ] [ button [ class "button--important", onClick Hit ] [ text "Hit" ] ]
-            , div [ class "game-status" ] []
-            , div [ class "game-control" ] [ button [ onClick Stand ] [ text ("Stand on " ++ String.fromInt score) ] ]
-            ]
+            [ text "" ]
 
 
 viewHand : Player -> Phase -> Html Msg
@@ -339,12 +333,15 @@ viewHand player phase =
 
             else
                 hand
+
+        classes =
+            [ ( "player-hand", True ), ( "player-hand--dealer", dealer == True ) ]
     in
     if List.isEmpty hand == True then
-        div [ class "player-hand" ] []
+        div [ classList classes ] []
 
     else
-        div [ class "player-hand" ] (List.map viewCard cards)
+        div [ classList classes ] (List.map viewCard cards)
 
 
 viewCard : Cards.Card -> Html Msg
@@ -355,43 +352,35 @@ viewCard card =
 viewWinner : Winner -> ( Player, Player ) -> Html Msg
 viewWinner winner ( dealer, player ) =
     let
-        classes =
-            { playerWin = "winner--player"
-            , dealerWin = "winner--dealer"
-            , draw = "winner--draw"
-            }
-
-        ( cssClass, description ) =
+        description =
             if winner == Bettor then
-                ( classes.playerWin
-                , if player.score == maxScore then
+                if player.score == maxScore then
                     "Blackjack!"
 
-                  else
+                else
                     "You win!"
-                )
 
             else if winner == Dealer then
-                ( classes.dealerWin
-                , if dealer.score == maxScore then
-                    "Dealer wins (Blackjack)"
-
-                  else if player.score > maxScore then
+                if player.score > maxScore then
                     "Busted"
 
-                  else
+                else
                     "Dealer wins"
-                )
 
             else if winner == Draw then
-                ( classes.draw, "Draw" )
+                "It's a draw"
 
             else
-                ( "", "" )
+                ""
     in
     div [ class "game-status" ]
-        [ div []
-            [ div [ classList [ ( "winner", True ), ( cssClass, True ) ] ] [ text description ]
-            , a [ onClick Deal ] [ text "Deal again" ]
+        [ div
+            [ classList
+                [ ( "winner", True )
+                , ( "winner--player", winner == Bettor )
+                , ( "winner--dealer", winner == Dealer )
+                , ( "winner--draw", winner == Draw )
+                ]
             ]
+            [ text description ]
         ]
