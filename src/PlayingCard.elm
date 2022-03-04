@@ -1,4 +1,4 @@
-module CardImage exposing (cardImage)
+module PlayingCard exposing (view)
 
 import Cards
 import Html exposing (Html, div, label, span, text)
@@ -21,8 +21,8 @@ rank suit =
             "♣"
 
 
-cardImage : Cards.Card -> Html msg
-cardImage card =
+view : Cards.Card -> Html msg
+view card =
     case card of
         Cards.Card suit face ->
             let

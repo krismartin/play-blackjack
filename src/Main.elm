@@ -1,13 +1,13 @@
 module Main exposing (..)
 
 import Browser
-import CardImage exposing (cardImage)
 import Cards
 import Deck
 import Games.Blackjack exposing (score)
 import Html exposing (Html, a, button, div, text)
 import Html.Attributes exposing (class, classList)
 import Html.Events exposing (onClick)
+import PlayingCard
 import Random
 import Update.Extra
 
@@ -349,7 +349,7 @@ viewHand player phase =
 
 viewCard : Cards.Card -> Html Msg
 viewCard card =
-    div [] [ cardImage card ]
+    div [] [ PlayingCard.view card ]
 
 
 viewWinner : Winner -> ( Player, Player ) -> Html Msg
