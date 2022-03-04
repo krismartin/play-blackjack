@@ -117,10 +117,6 @@ update msg model =
                         -- Player scores blackjack
                         ( Ended, Bettor )
 
-                    else if dealerScore == maxScore then
-                        -- Dealer scores blackjack
-                        ( Ended, Dealer )
-
                     else if playerScore > maxScore then
                         -- Player busted
                         ( Ended, Dealer )
@@ -130,7 +126,11 @@ update msg model =
                         ( Ended, Bettor )
 
                     else if model.phase == PlayerStand then
-                        if dealerScore < 17 then
+                        if dealerScore == maxScore then
+                            -- Dealer scores blackjack
+                            ( Ended, Dealer )
+
+                        else if dealerScore < 17 then
                             -- Draw another card to the dealer's hand
                             ( model.phase, model.winner )
 
