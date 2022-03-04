@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Cards
+import Chip exposing (Chip)
 import Deck
 import Games.Blackjack exposing (score)
 import Html exposing (Html, a, button, div, text)
@@ -56,8 +57,15 @@ type Winner
     | Nothing
 
 
+type alias Chips =
+    List Chip
+
+
 type alias AppData =
-    { deck : Deck.ShuffledDeck
+    { bank : Int
+    , bet : Int
+    , chips : Chips
+    , deck : Deck.ShuffledDeck
     , players : ( Player, Player )
     , phase : Phase
     , winner : Winner
@@ -73,9 +81,28 @@ maxScore =
     21
 
 
+initialBank : Int
+initialBank =
+    1000
+
+
+initialChips : List Chip
+initialChips =
+    [ Chip.newChip 5 "#db2929"
+    , Chip.newChip 10 "#073d91"
+    , Chip.newChip 25 "#168716"
+    , Chip.newChip 50 "#ed9900"
+    , Chip.newChip 100 "#000000"
+    , Chip.newChip 500 "#9f249f"
+    ]
+
+
 initialModel : Model
 initialModel =
-    { deck = Deck.fullDeck
+    { bank = initialBank
+    , bet = 0
+    , chips = initialChips
+    , deck = Deck.fullDeck
     , phase = Waiting
     , players =
         ( { dealer = True, hand = [], score = 0 }
@@ -291,6 +318,7 @@ view model =
         , viewGameStatus model
         , viewHand player phase
         , viewPlayerControl phase
+        , viewChips model
         ]
 
 
@@ -311,6 +339,23 @@ viewPlayerControl phase =
             [ button [ class "button--important", onClick Hit ] [ text "Hit" ]
             , button [ onClick Stand ] [ text "Stand" ]
             ]
+
+
+viewChips : AppData -> Html Msg
+viewChips model =
+    div
+        [ class "player-wallet" ]
+        [ div
+            [ class "drawer" ]
+            [ div [ class "player-chips" ] (List.map viewChip model.chips)
+            , div [ class "player-bank" ] [ text ("Bank: $" ++ String.fromInt model.bank) ]
+            ]
+        ]
+
+
+viewChip : Chip -> Html Msg
+viewChip chip =
+    Chip.view chip
 
 
 viewGameStatus : AppData -> Html Msg
