@@ -7,16 +7,16 @@
   --buttonBg: #04400f;
   --buttonFontColor: #ffea00;
   --cardFontFamily: cards;
-  --cardHeight: 250px;
-  --cardWidth: 160px;
+  --cardHeight: 220px;
+  --cardWidth: 150px;
   --casinoTableBg: #005b13;
   --dealerWin: #d23737;
-  --draw: #17af22;
+  --draw: #02340c;
   --fontFamily: "Source Sans Pro", sans-serif;
   --important: #ffea00;
   --linkColor: #e8e8e8;
   --linkHoverColor: #ffffff;
-  --playerWin: #ffea00;
+  --playerWin: #17af22;
   --playingCardBlack: black;
   --playingCardRed: firebrick;
 }
@@ -50,7 +50,7 @@ body {
   align-self: center;
   background-color: var(--casinoTableBg);
   background-image: url(./assets/bg.png);
-  background-position: center;
+  background-position: 50% 35%;
   background-repeat: no-repeat;
   background-size: initial;
   display: flex;
@@ -76,12 +76,17 @@ body {
   width: 100%;
 }
 
-.game-control {
+.player-hand--dealer {
+  flex-grow: 0;
+  padding: 40px 0 40px 0;
+}
+
+/* .game-control {
   align-self: center;
   display: flex;
   flex-grow: 1;
   justify-content: center;
-}
+} */
 
 .game-status {
   display: flex;
@@ -95,19 +100,21 @@ body {
   height: fit-content;
 }
 
-.game-status a {
-  color: var(--linkColor);
-  display: block;
-  font-size: 20px;
-  padding-top: 10px;
-  text-align: center;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
+.player-control {
+  align-items: center;
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  padding-bottom: 40px;
+  width: 100%;
 }
 
-.game-status a:hover {
-  color: var(--linkHoverColor);
+.player-control > button {
+  min-width: 120px;
+}
+
+.player-control > button:nth-child(2) {
+  margin-left: 10px;
 }
 
 button {
@@ -118,7 +125,7 @@ button {
   cursor: pointer;
   font-family: var(--fontFamily);
   font-size: 20px;
-  padding: 15px 25px;
+  padding: 10px 20px;
 }
 
 button:hover {
@@ -198,14 +205,14 @@ button:hover {
 
 .playing-card--flip label::before {
   animation-delay: 150ms;
-  animation-duration: 0.5s;
+  animation-duration: 0.3s;
   animation-fill-mode: forwards;
   animation-name: turn;
 }
 
 .playing-card--flip .card-front {
   animation-delay: 150ms;
-  animation-duration: 0.5s;
+  animation-duration: 0.3s;
   animation-fill-mode: forwards;
   animation-name: fold;
 }
@@ -236,18 +243,28 @@ button:hover {
 
 .card-front[data-card^="2"],
 .card-front[data-card^="3"] {
-  font-size: 46px;
+  font-size: 38px;
 }
 
 .card-front[data-card^="4"],
-.card-front[data-card^="5"],
-.card-front[data-card^="6"] {
+.card-front[data-card^="5"] {
   font-size: 34px;
 }
 
-.card-front[data-card^="7"],
+.card-front[data-card^="6"] {
+  font-size: 30px;
+}
+
+.card-front[data-card^="7"] {
+  font-size: 28px;
+}
+
 .card-front[data-card^="8"],
 .card-front[data-card^="9"] {
+  font-size: 24px;
+}
+
+.card-front[data-card^="10"] {
   font-size: 26px;
 }
 
@@ -284,20 +301,22 @@ label[class="♦"] .card-front {
 }
 
 .winner {
-  border-radius: 5px;
-  font-size: 20px;
-  padding: 15px 25px;
+  font-family: "Bungee Inline", cursive;
+  font-size: 22px;
+  padding: 4px 15px;
 }
 
 .winner--player {
-  background: var(--playerWin);
+  background-color: var(--playerWin);
+  color: #f1f1f1;
 }
 
 .winner--dealer {
-  background: var(--dealerWin);
-  color: #ffffff;
+  background-color: var(--dealerWin);
+  color: #f1f1f1;
 }
 
 .winner--draw {
-  background: var(--draw);
+  background-color: var(--draw);
+  color: #f1f1f1;
 }
