@@ -286,8 +286,14 @@ view model =
 viewPlayerControl : Phase -> Html Msg
 viewPlayerControl phase =
     if phase == Waiting || phase == Ended then
-        div [ class "player-control" ]
-            [ button [ class "button--important", onClick Deal ] [ text "Deal" ] ]
+        div
+            [ classList
+                [ ( "player-control", True )
+                , ( "player-control--waiting", phase == Waiting )
+                ]
+            ]
+            [ button [ class "button--important", onClick Deal ] [ text "Deal" ]
+            ]
 
     else
         div [ class "player-control" ]

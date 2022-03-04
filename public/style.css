@@ -109,6 +109,10 @@ body {
   width: 100%;
 }
 
+.player-control--waiting {
+  flex-grow: 100000;
+}
+
 .player-control > button {
   min-width: 120px;
 }
