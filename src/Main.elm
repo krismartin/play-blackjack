@@ -98,6 +98,21 @@ type Msg
     | DealerDraw
 
 
+type alias DrawnCard =
+    { drawnCards : List Cards.Card
+    , deck : Deck.ShuffledDeck
+    }
+
+
+dealCards : Int -> DrawnCard -> DrawnCard
+dealCards _ state =
+    let
+        ( drawnCard, nextDeck ) =
+            Deck.draw state.deck
+    in
+    { drawnCards = state.drawnCards ++ [ drawnCard ], deck = nextDeck }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -165,26 +180,17 @@ update msg model =
 
         Deal ->
             let
-                ( drawnCard1, newDeck ) =
-                    Deck.draw model.deck
-
-                ( drawnCard2, newDeck2 ) =
-                    Deck.draw newDeck
-
-                ( drawnCard3, newDeck3 ) =
-                    Deck.draw newDeck2
-
-                ( drawnCard4, newDeck4 ) =
-                    Deck.draw newDeck3
+                { drawnCards, deck } =
+                    List.foldr dealCards { deck = model.deck, drawnCards = [] } (List.repeat 4 0)
 
                 dealerCards =
-                    [ drawnCard1, drawnCard2 ]
+                    List.take 2 drawnCards
 
                 dealerScore =
                     score (Deck.newDeck dealerCards)
 
                 playerCards =
-                    [ drawnCard3, drawnCard4 ]
+                    List.drop 2 drawnCards
 
                 playerScore =
                     score (Deck.newDeck playerCards)
@@ -193,7 +199,7 @@ update msg model =
                     model.players
             in
             ( { model
-                | deck = newDeck4
+                | deck = deck
                 , players =
                     ( { dealer | dealer = True, hand = dealerCards, score = dealerScore }
                     , { player | hand = playerCards, score = playerScore }
