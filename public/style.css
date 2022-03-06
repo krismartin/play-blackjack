@@ -50,7 +50,7 @@ body {
   align-self: center;
   background-color: var(--casinoTableBg);
   background-image: url(./assets/bg.png);
-  background-position: 50% 35%;
+  background-position: 50% 30%;
   background-repeat: no-repeat;
   background-size: initial;
   display: flex;
@@ -358,6 +358,21 @@ label[class="♦"] .card-front {
   margin: 0px 8px;
   transition: all 1s;
   width: 70px;
+}
+
+.chip:hover {
+  position: relative;
+  top: -1px;
+}
+
+.chip--disabled {
+  opacity: 0.35;
+}
+
+.chip--disabled:hover {
+  cursor: not-allowed;
+  position: initial;
+  top: 0;
 }
 
 .chip span {

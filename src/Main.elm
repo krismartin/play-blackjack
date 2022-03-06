@@ -63,7 +63,7 @@ type alias Chips =
 
 type alias AppData =
     { bank : Int
-    , bet : Int
+    , bets : Chips
     , chips : Chips
     , deck : Deck.ShuffledDeck
     , players : ( Player, Player )
@@ -100,7 +100,7 @@ initialChips =
 initialModel : Model
 initialModel =
     { bank = initialBank
-    , bet = 0
+    , bets = []
     , chips = initialChips
     , deck = Deck.fullDeck
     , phase = Waiting
@@ -123,6 +123,7 @@ type Msg
     | Hit
     | Stand
     | DealerDraw
+    | AddBet Chip
 
 
 type alias DealCards =
@@ -299,6 +300,25 @@ update msg model =
                 |> Update.Extra.filter (drawAnotherCard == False)
                     (Update.Extra.andThen update CheckScores)
 
+        AddBet chip ->
+            let
+                { bank, bets, chips } =
+                    model
+
+                nextBank =
+                    bank - chip.value
+
+                nextChips =
+                    List.map (\c -> { c | active = c.value <= nextBank }) chips
+            in
+            ( { model
+                | bank = nextBank
+                , bets = bets ++ [ chip ]
+                , chips = nextChips
+              }
+            , Cmd.none
+            )
+
 
 
 -- VIEW
@@ -348,14 +368,27 @@ viewChips model =
         [ div
             [ class "drawer" ]
             [ div [ class "player-chips" ] (List.map viewChip model.chips)
-            , div [ class "player-bank" ] [ text ("Bank: $" ++ String.fromInt model.bank) ]
+            , div [ class "player-bank" ] [ text ("Bank: $" ++ String.fromInt model.bank ++ ", Bet: $" ++ String.fromInt (totalBet model.bets)) ]
             ]
         ]
 
 
 viewChip : Chip -> Html Msg
 viewChip chip =
-    Chip.view chip
+    let
+        attributes =
+            if chip.active == True then
+                [ onClick (AddBet chip) ]
+
+            else
+                []
+    in
+    Chip.view attributes chip
+
+
+totalBet : Chips -> Int
+totalBet chips =
+    List.foldl (+) 0 (List.map (\chip -> chip.value) chips)
 
 
 viewGameStatus : AppData -> Html Msg
