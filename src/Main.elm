@@ -215,7 +215,12 @@ update msg model =
 
                 nextBank =
                     if nextWinner == Bettor then
-                        bank + (betValue * 2)
+                        if playerScore == maxScore then
+                            -- Blackjack pays 3 to 2
+                            bank + ((betValue // 2) * 3)
+
+                        else
+                            bank + (betValue * 2)
 
                     else if nextWinner == Draw then
                         bank + betValue
