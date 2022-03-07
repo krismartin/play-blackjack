@@ -124,6 +124,7 @@ type Msg
     | Stand
     | DealerDraw
     | AddBet Chip
+    | UpdateChips
 
 
 type alias DealCards =
@@ -146,12 +147,33 @@ drawCard _ state =
     { drawnCards = state.drawnCards ++ [ drawnCard ], deck = nextDeck }
 
 
+calculateWinning : Winner -> Int -> Int -> Int
+calculateWinning winner bet playerScore =
+    let
+        winning =
+            if winner == Bettor then
+                if playerScore == maxScore then
+                    -- Blackjack pays 3 to 2
+                    (bet // 2) * 3
+
+                else
+                    bet * 2
+
+            else if winner == Draw then
+                bet
+
+            else
+                0
+    in
+    winning
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CheckScores ->
             let
-                { bank, bets, chips, players, phase, winner } =
+                { bank, bets, players, phase, winner } =
                     model
 
                 ( dealer, player ) =
@@ -210,23 +232,8 @@ update msg model =
                     else
                         Cmd.none
 
-                betValue =
-                    totalBet bets
-
                 nextBank =
-                    if nextWinner == Bettor then
-                        if playerScore == maxScore then
-                            -- Blackjack pays 3 to 2
-                            bank + ((betValue // 2) * 3)
-
-                        else
-                            bank + (betValue * 2)
-
-                    else if nextWinner == Draw then
-                        bank + betValue
-
-                    else
-                        bank
+                    bank + calculateWinning nextWinner (totalBet bets) playerScore
 
                 nextBets =
                     if nextWinner == Nothing then
@@ -234,11 +241,16 @@ update msg model =
 
                     else
                         []
-
-                nextChips =
-                    List.map (\c -> { c | active = c.value <= nextBank }) chips
             in
-            ( { model | phase = nextPhase, winner = nextWinner, bank = nextBank, bets = nextBets, chips = nextChips }, nextCmd )
+            ( { model
+                | phase = nextPhase
+                , winner = nextWinner
+                , bank = nextBank
+                , bets = nextBets
+              }
+            , nextCmd
+            )
+                |> Update.Extra.andThen update UpdateChips
                 |> Update.Extra.filter (nextPhase == PlayerStand)
                     (Update.Extra.andThen update DealerDraw)
 
@@ -333,22 +345,26 @@ update msg model =
 
         AddBet chip ->
             let
-                { bank, bets, chips } =
+                { bank, bets } =
                     model
 
                 nextBank =
                     bank - chip.value
-
-                nextChips =
-                    List.map (\c -> { c | active = c.value <= nextBank }) chips
             in
             ( { model
                 | bank = nextBank
                 , bets = bets ++ [ chip ]
-                , chips = nextChips
               }
             , Cmd.none
             )
+                |> Update.Extra.andThen update UpdateChips
+
+        UpdateChips ->
+            let
+                chips =
+                    List.map (\c -> { c | active = c.value <= model.bank }) model.chips
+            in
+            ( { model | chips = chips }, Cmd.none )
 
 
 
