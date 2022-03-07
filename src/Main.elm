@@ -54,7 +54,7 @@ type Winner
     = Dealer
     | Bettor
     | Draw
-    | Nothing
+    | NoWinner
 
 
 type alias Chips =
@@ -108,7 +108,7 @@ initialModel =
         ( { dealer = True, hand = [], score = 0 }
         , { dealer = False, hand = [], score = 0 }
         )
-    , winner = Nothing
+    , winner = NoWinner
     }
 
 
@@ -124,6 +124,7 @@ type Msg
     | Stand
     | DealerDraw
     | AddBet Chip
+    | UndoBet Chip
     | UpdateChips
 
 
@@ -236,7 +237,7 @@ update msg model =
                     bank + calculateWinning nextWinner (totalBet bets) playerScore
 
                 nextBets =
-                    if nextWinner == Nothing then
+                    if nextWinner == NoWinner then
                         bets
 
                     else
@@ -281,7 +282,7 @@ update msg model =
                     , { player | hand = playerCards, score = playerScore }
                     )
                 , phase = PlayerDeal
-                , winner = Nothing
+                , winner = NoWinner
               }
             , Cmd.none
             )
@@ -359,6 +360,16 @@ update msg model =
             )
                 |> Update.Extra.andThen update UpdateChips
 
+        UndoBet lastBet ->
+            let
+                bets =
+                    List.reverse model.bets
+                        |> List.drop 1
+                        |> List.reverse
+            in
+            ( { model | bets = bets, bank = model.bank + lastBet.value }, Cmd.none )
+                |> Update.Extra.andThen update UpdateChips
+
         UpdateChips ->
             let
                 chips =
@@ -398,7 +409,8 @@ viewPlayerControl phase bets =
                 , ( "player-control--waiting", phase == Waiting )
                 ]
             ]
-            [ button [ class "button--important", onClick Deal, disabled (List.isEmpty bets) ] [ text "Deal" ]
+            [ viewBets bets
+            , button [ class "button--important", onClick Deal, disabled (List.isEmpty bets) ] [ text "Deal" ]
             ]
 
     else
@@ -408,13 +420,33 @@ viewPlayerControl phase bets =
             ]
 
 
+viewBets : Chips -> Html Msg
+viewBets bets =
+    let
+        mostRecentBet =
+            case List.reverse bets |> List.head of
+                Nothing ->
+                    div [ class "chip" ] []
+
+                Just chip ->
+                    Chip.view [ onClick (UndoBet chip) ] chip
+    in
+    div
+        [ class "bets" ]
+        [ mostRecentBet
+        , div
+            [ class "total-bet" ]
+            [ text ("Bet: $" ++ String.fromInt (totalBet bets)) ]
+        ]
+
+
 viewChips : AppData -> Html Msg
 viewChips model =
     div
         [ class "player-wallet" ]
         [ div
             [ class "drawer" ]
-            [ div [ class "player-bank" ] [ text ("Bank: $" ++ String.fromInt model.bank ++ ", Bet: $" ++ String.fromInt (totalBet model.bets)) ]
+            [ div [ class "player-bank" ] [ text ("Bank: $" ++ String.fromInt model.bank) ]
             , div [ class "player-chips" ] (List.map viewChip model.chips)
             ]
         ]

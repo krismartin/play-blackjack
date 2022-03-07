@@ -132,6 +132,11 @@ button {
   padding: 10px 20px;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.2;
+}
+
 button:hover {
   color: #ffffff;
 }
@@ -356,13 +361,8 @@ label[class="♦"] .card-front {
   height: 70px;
   justify-content: center;
   margin: 0px 8px;
-  transition: all 1s;
+  transition: all 0.2s;
   width: 70px;
-}
-
-.chip:hover {
-  position: relative;
-  top: -1px;
 }
 
 .chip--disabled {
@@ -382,4 +382,17 @@ label[class="♦"] .card-front {
   line-height: 50px;
   text-align: center;
   width: 50px;
+}
+
+.bets {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding-right: 20px;
+}
+
+.total-bet {
+  color: white;
+  font-size: 26px;
+  padding-top: 10px;
 }
