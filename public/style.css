@@ -105,7 +105,7 @@ body {
   display: flex;
   flex-grow: 1;
   justify-content: center;
-  padding-bottom: 40px;
+  padding: 20px 0px;
   width: 100%;
 }
 
@@ -334,11 +334,11 @@ label[class="♦"] .card-front {
 .player-wallet .drawer {
   background: #04400f;
   border-radius: 25px 25px 0 0;
-  padding: 20px 40px;
+  padding: 20px 20px;
 }
 
 .player-bank {
-  padding-top: 20px;
+  padding-bottom: 10px;
   text-align: center;
   color: white;
   font-size: 26px;

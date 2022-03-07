@@ -6,7 +6,7 @@ import Chip exposing (Chip)
 import Deck
 import Games.Blackjack exposing (score)
 import Html exposing (Html, a, button, div, text)
-import Html.Attributes exposing (class, classList)
+import Html.Attributes exposing (class, classList, disabled)
 import Html.Events exposing (onClick)
 import PlayingCard
 import Random
@@ -83,7 +83,7 @@ maxScore =
 
 initialBank : Int
 initialBank =
-    1000
+    500
 
 
 initialChips : List Chip
@@ -151,8 +151,11 @@ update msg model =
     case msg of
         CheckScores ->
             let
+                { bank, bets, chips, players, phase, winner } =
+                    model
+
                 ( dealer, player ) =
-                    model.players
+                    players
 
                 dealerScore =
                     dealer.score
@@ -180,7 +183,7 @@ update msg model =
 
                         else if dealerScore < 17 then
                             -- Draw another card to the dealer's hand
-                            ( model.phase, model.winner )
+                            ( phase, winner )
 
                         else if playerScore > dealerScore then
                             -- Player wins
@@ -195,10 +198,10 @@ update msg model =
                             ( Ended, Draw )
 
                         else
-                            ( model.phase, model.winner )
+                            ( phase, winner )
 
                     else
-                        ( model.phase, model.winner )
+                        ( phase, winner )
 
                 nextCmd =
                     if nextPhase == Ended then
@@ -206,8 +209,31 @@ update msg model =
 
                     else
                         Cmd.none
+
+                betValue =
+                    totalBet bets
+
+                nextBank =
+                    if nextWinner == Bettor then
+                        bank + (betValue * 2)
+
+                    else if nextWinner == Draw then
+                        bank + betValue
+
+                    else
+                        bank
+
+                nextBets =
+                    if nextWinner == Nothing then
+                        bets
+
+                    else
+                        []
+
+                nextChips =
+                    List.map (\c -> { c | active = c.value <= nextBank }) chips
             in
-            ( { model | phase = nextPhase, winner = nextWinner }, nextCmd )
+            ( { model | phase = nextPhase, winner = nextWinner, bank = nextBank, bets = nextBets, chips = nextChips }, nextCmd )
                 |> Update.Extra.filter (nextPhase == PlayerStand)
                     (Update.Extra.andThen update DealerDraw)
 
@@ -327,7 +353,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-        { phase, players } =
+        { bets, phase, players } =
             model
 
         ( dealer, player ) =
@@ -337,13 +363,13 @@ view model =
         [ viewHand dealer phase
         , viewGameStatus model
         , viewHand player phase
-        , viewPlayerControl phase
+        , viewPlayerControl phase bets
         , viewChips model
         ]
 
 
-viewPlayerControl : Phase -> Html Msg
-viewPlayerControl phase =
+viewPlayerControl : Phase -> Chips -> Html Msg
+viewPlayerControl phase bets =
     if phase == Waiting || phase == Ended then
         div
             [ classList
@@ -351,7 +377,7 @@ viewPlayerControl phase =
                 , ( "player-control--waiting", phase == Waiting )
                 ]
             ]
-            [ button [ class "button--important", onClick Deal ] [ text "Deal" ]
+            [ button [ class "button--important", onClick Deal, disabled (List.isEmpty bets) ] [ text "Deal" ]
             ]
 
     else
@@ -367,8 +393,8 @@ viewChips model =
         [ class "player-wallet" ]
         [ div
             [ class "drawer" ]
-            [ div [ class "player-chips" ] (List.map viewChip model.chips)
-            , div [ class "player-bank" ] [ text ("Bank: $" ++ String.fromInt model.bank ++ ", Bet: $" ++ String.fromInt (totalBet model.bets)) ]
+            [ div [ class "player-bank" ] [ text ("Bank: $" ++ String.fromInt model.bank ++ ", Bet: $" ++ String.fromInt (totalBet model.bets)) ]
+            , div [ class "player-chips" ] (List.map viewChip model.chips)
             ]
         ]
 
