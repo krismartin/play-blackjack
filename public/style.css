@@ -343,10 +343,17 @@ label[class="♦"] .card-front {
 }
 
 .player-bank {
-  padding-bottom: 10px;
   text-align: center;
   color: white;
-  font-size: 26px;
+  font-size: 24px;
+}
+
+.player-bank span.bet {
+  padding-left: 40px;
+}
+
+.player-chips {
+  padding-top: 10px;
 }
 
 .chip {
@@ -393,6 +400,6 @@ label[class="♦"] .card-front {
 
 .total-bet {
   color: white;
-  font-size: 26px;
+  font-size: 24px;
   padding-top: 10px;
 }

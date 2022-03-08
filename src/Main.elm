@@ -5,7 +5,7 @@ import Cards
 import Chip exposing (Chip)
 import Deck
 import Games.Blackjack exposing (score)
-import Html exposing (Html, a, button, div, text)
+import Html exposing (Html, button, div, span, text)
 import Html.Attributes exposing (class, classList, disabled)
 import Html.Events exposing (onClick)
 import PlayingCard
@@ -442,12 +442,32 @@ viewBets bets =
 
 viewChips : AppData -> Html Msg
 viewChips model =
+    let
+        { bank, phase } =
+            model
+
+        allowBetting =
+            phase == Waiting || phase == Ended
+
+        bankAndBet =
+            [ span [ class "bank" ] [ text ("Bank: $" ++ String.fromInt bank) ]
+            , if allowBetting == False then
+                span [ class "bet" ] [ text ("Bet: $" ++ String.fromInt (totalBet model.bets)) ]
+
+              else
+                text ""
+            ]
+    in
     div
         [ class "player-wallet" ]
         [ div
             [ class "drawer" ]
-            [ div [ class "player-bank" ] [ text ("Bank: $" ++ String.fromInt model.bank) ]
-            , div [ class "player-chips" ] (List.map viewChip model.chips)
+            [ div [ class "player-bank" ] bankAndBet
+            , if allowBetting == True then
+                div [ class "player-chips" ] (List.map viewChip model.chips)
+
+              else
+                text ""
             ]
         ]
 
