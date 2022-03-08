@@ -5,7 +5,7 @@ import Cards
 import Chip exposing (Chip)
 import Deck
 import Games.Blackjack exposing (score)
-import Html exposing (Html, button, div, span, text)
+import Html exposing (Html, a, button, div, h1, span, text)
 import Html.Attributes exposing (class, classList, disabled)
 import Html.Events exposing (onClick)
 import PlayingCard
@@ -69,6 +69,10 @@ type alias AppData =
     , players : ( Player, Player )
     , phase : Phase
     , winner : Winner
+    , handsPlayed : Int
+    , handsWon : Int
+    , highestBank : Int
+    , highestWinning : Int
     }
 
 
@@ -109,6 +113,10 @@ initialModel =
         , { dealer = False, hand = [], score = 0 }
         )
     , winner = NoWinner
+    , handsPlayed = 0
+    , handsWon = 0
+    , highestBank = initialBank
+    , highestWinning = 0
     }
 
 
@@ -126,6 +134,7 @@ type Msg
     | AddBet Chip
     | UndoBet Chip
     | UpdateChips
+    | RestartGame
 
 
 type alias DealCards =
@@ -149,19 +158,16 @@ drawCard _ state =
 
 
 calculateWinning : Winner -> Int -> Int -> Int
-calculateWinning winner bet playerScore =
+calculateWinning winner betValue playerScore =
     let
         winning =
             if winner == Bettor then
                 if playerScore == maxScore then
                     -- Blackjack pays 3 to 2
-                    (bet // 2) * 3
+                    (betValue // 2) * 3
 
                 else
-                    bet * 2
-
-            else if winner == Draw then
-                bet
+                    betValue
 
             else
                 0
@@ -233,8 +239,22 @@ update msg model =
                     else
                         Cmd.none
 
+                betValue =
+                    totalBet bets
+
+                totalWinning =
+                    calculateWinning nextWinner betValue playerScore
+
                 nextBank =
-                    bank + calculateWinning nextWinner (totalBet bets) playerScore
+                    bank
+                        + totalWinning
+                        -- Return bet if player wins or if it's a draw
+                        + (if nextWinner == Bettor || nextWinner == Draw then
+                            betValue
+
+                           else
+                            0
+                          )
 
                 nextBets =
                     if nextWinner == NoWinner then
@@ -242,12 +262,36 @@ update msg model =
 
                     else
                         []
+
+                handsWon =
+                    if nextWinner == Bettor then
+                        model.handsWon + 1
+
+                    else
+                        model.handsWon
+
+                highestBank =
+                    if nextBank > model.highestBank then
+                        nextBank
+
+                    else
+                        model.highestBank
+
+                highestWinning =
+                    if totalWinning > model.highestWinning then
+                        totalWinning
+
+                    else
+                        model.highestWinning
             in
             ( { model
                 | phase = nextPhase
                 , winner = nextWinner
                 , bank = nextBank
                 , bets = nextBets
+                , handsWon = handsWon
+                , highestBank = highestBank
+                , highestWinning = highestWinning
               }
             , nextCmd
             )
@@ -257,6 +301,9 @@ update msg model =
 
         Deal ->
             let
+                { handsPlayed, players } =
+                    model
+
                 { drawnCards, deck } =
                     dealCards 4 model.deck
 
@@ -273,7 +320,7 @@ update msg model =
                     score (Deck.newDeck playerCards)
 
                 ( dealer, player ) =
-                    model.players
+                    players
             in
             ( { model
                 | deck = deck
@@ -283,6 +330,7 @@ update msg model =
                     )
                 , phase = PlayerDeal
                 , winner = NoWinner
+                , handsPlayed = handsPlayed + 1
               }
             , Cmd.none
             )
@@ -377,6 +425,9 @@ update msg model =
             in
             ( { model | chips = chips }, Cmd.none )
 
+        RestartGame ->
+            ( initialModel, Random.generate ShuffleDeck Deck.randomDeck )
+
 
 
 -- VIEW
@@ -385,11 +436,14 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-        { bets, phase, players } =
+        { bank, bets, phase, players, handsPlayed, handsWon, highestBank, highestWinning } =
             model
 
         ( dealer, player ) =
             players
+
+        houseWon =
+            phase == Ended && bank == 0 && (List.isEmpty bets == True)
     in
     div [ class "main" ]
         [ viewHand dealer phase
@@ -397,6 +451,11 @@ view model =
         , viewHand player phase
         , viewPlayerControl phase bets
         , viewChips model
+        , if houseWon == True then
+            viewGameStats handsPlayed handsWon highestWinning highestBank
+
+          else
+            text ""
         ]
 
 
@@ -577,4 +636,38 @@ viewWinner winner ( dealer, player ) =
                 ]
             ]
             [ text description ]
+        ]
+
+
+viewGameStats : Int -> Int -> Int -> Int -> Html Msg
+viewGameStats handsPlayed handsWon highestWinning highestBank =
+    div
+        [ class "modal-window" ]
+        [ div
+            [ class "game-stats" ]
+            [ h1 [] [ text "House wins!" ]
+            , div
+                [ class "game-stat" ]
+                [ div [] [ text "Hands played" ]
+                , div [] [ text (String.fromInt handsPlayed) ]
+                ]
+            , div
+                [ class "game-stat" ]
+                [ div [] [ text "Hands won" ]
+                , div [] [ text (String.fromInt handsWon) ]
+                ]
+            , div
+                [ class "game-stat" ]
+                [ div [] [ text "Highest winning" ]
+                , div [] [ text ("$" ++ String.fromInt highestWinning) ]
+                ]
+            , div
+                [ class "game-stat" ]
+                [ div [] [ text "Highest bank" ]
+                , div [] [ text ("$" ++ String.fromInt highestBank) ]
+                ]
+            , div
+                [ class "actions", Html.Attributes.style "padding-top" "20px" ]
+                [ button [ onClick RestartGame, class "button--important" ] [ text "Continue" ] ]
+            ]
         ]
