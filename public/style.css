@@ -50,7 +50,7 @@ body {
   align-self: center;
   background-color: var(--casinoTableBg);
   background-image: url(./assets/bg.png);
-  background-position: 50% 35%;
+  background-position: 50% 30%;
   background-repeat: no-repeat;
   background-size: initial;
   display: flex;
@@ -105,7 +105,7 @@ body {
   display: flex;
   flex-grow: 1;
   justify-content: center;
-  padding-bottom: 40px;
+  padding: 20px 0px;
   width: 100%;
 }
 
@@ -130,6 +130,11 @@ button {
   font-family: var(--fontFamily);
   font-size: 20px;
   padding: 10px 20px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.2;
 }
 
 button:hover {
@@ -323,4 +328,119 @@ label[class="♦"] .card-front {
 .winner--draw {
   background-color: var(--draw);
   color: #f1f1f1;
+}
+
+.player-wallet {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.player-wallet .drawer {
+  background: #04400f;
+  border-radius: 25px 25px 0 0;
+  padding: 20px 20px;
+}
+
+.player-bank {
+  text-align: center;
+  color: white;
+  font-size: 24px;
+}
+
+.player-bank span.bet {
+  padding-left: 40px;
+}
+
+.player-chips {
+  padding-top: 10px;
+}
+
+.chip {
+  align-items: center;
+  border-radius: 50%;
+  border: 7px dashed white;
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: "Lato", sans-serif;
+  font-size: 16px;
+  height: 70px;
+  justify-content: center;
+  margin: 0px 8px;
+  transition: all 0.2s;
+  width: 70px;
+}
+
+.chip--disabled {
+  opacity: 0.35;
+}
+
+.chip--disabled:hover {
+  cursor: not-allowed;
+  position: initial;
+  top: 0;
+}
+
+.chip span {
+  border-radius: 50%;
+  border: 3px dashed white;
+  height: 50px;
+  line-height: 50px;
+  text-align: center;
+  width: 50px;
+}
+
+.bets {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding-right: 20px;
+}
+
+.total-bet {
+  color: white;
+  font-size: 24px;
+  padding-top: 10px;
+}
+
+.modal-window {
+  background-color: rgba(0, 0, 0, 0.60);
+  bottom: 0;
+  left: 0;
+  opacity: 1;
+  pointer-events: auto;
+  position: fixed;
+  right: 0;
+  top: 0;
+  transition: all 0.3s;
+  visibility: visible;
+  z-index: 999;
+}
+
+.modal-window > div {
+  background: white;
+  border-radius: 15px;
+  border: solid 15px var(--casinoTableBg);
+  left: 50%;
+  padding: 2em;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+}
+
+.modal-window h1 {
+  font-size: 150%;
+  margin: 0 0 20px;
+}
+
+.game-stat {
+  display: flex;
+  padding-bottom: 10px;
+  width: 100%;
+}
+
+.game-stat div:first-child {
+  flex-grow: 1;
 }
