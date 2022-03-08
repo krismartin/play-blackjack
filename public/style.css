@@ -444,3 +444,7 @@ label[class="♦"] .card-front {
 .game-stat div:first-child {
   flex-grow: 1;
 }
+
+.github-fork-ribbon:before {
+  background-color: var(--buttonBg) !important;
+}
