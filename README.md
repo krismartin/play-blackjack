@@ -7,5 +7,5 @@ A classic game, made to learn Elm.
 ## Getting Started
 
 1. [Install Elm](https://guide.elm-lang.org/install/elm.html)
-2. Install `elm-live`: `npm install -g elm-live`
+2. [Install elm-live](https://www.elm-live.com/)
 3. Run `bin/start` to start a dev server
