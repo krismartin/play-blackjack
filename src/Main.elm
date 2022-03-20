@@ -134,6 +134,7 @@ type Msg
     | AddBet Chip
     | UndoBet Chip
     | UpdateChips
+    | UpdateGameStats Int
     | RestartGame
 
 
@@ -175,128 +176,111 @@ calculateWinning winner betValue playerScore =
     winning
 
 
+determineWinner : Phase -> Int -> Int -> Winner
+determineWinner phase dealerScore playerScore =
+    let
+        winner =
+            if playerScore == maxScore then
+                -- Player scores blackjack
+                Bettor
+
+            else if playerScore > maxScore then
+                -- Player busted
+                Dealer
+
+            else if dealerScore > maxScore then
+                -- Dealer busted
+                Bettor
+
+            else if phase == PlayerStand then
+                if dealerScore == maxScore then
+                    -- Dealer scores blackjack
+                    Dealer
+
+                else if dealerScore < 17 then
+                    -- Draw another card to the dealer's hand
+                    NoWinner
+
+                else if playerScore > dealerScore then
+                    -- Player wins
+                    Bettor
+
+                else if dealerScore > playerScore then
+                    -- Dealer wins
+                    Dealer
+
+                else if dealerScore == playerScore then
+                    -- It's a draw
+                    Draw
+
+                else
+                    NoWinner
+
+            else
+                NoWinner
+    in
+    winner
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CheckScores ->
             let
-                { bank, bets, players, phase, winner } =
-                    model
-
                 ( dealer, player ) =
-                    players
+                    model.players
 
-                dealerScore =
-                    dealer.score
+                winner =
+                    determineWinner model.phase dealer.score player.score
 
-                playerScore =
-                    player.score
-
-                ( nextPhase, nextWinner ) =
-                    if playerScore == maxScore then
-                        -- Player scores blackjack
-                        ( Ended, Bettor )
-
-                    else if playerScore > maxScore then
-                        -- Player busted
-                        ( Ended, Dealer )
-
-                    else if dealerScore > maxScore then
-                        -- Dealer busted
-                        ( Ended, Bettor )
-
-                    else if model.phase == PlayerStand then
-                        if dealerScore == maxScore then
-                            -- Dealer scores blackjack
-                            ( Ended, Dealer )
-
-                        else if dealerScore < 17 then
-                            -- Draw another card to the dealer's hand
-                            ( phase, winner )
-
-                        else if playerScore > dealerScore then
-                            -- Player wins
-                            ( Ended, Bettor )
-
-                        else if dealerScore > playerScore then
-                            -- Dealer wins
-                            ( Ended, Dealer )
-
-                        else if dealerScore == playerScore then
-                            -- It's a draw
-                            ( Ended, Draw )
-
-                        else
-                            ( phase, winner )
+                phase =
+                    if winner == NoWinner then
+                        model.phase
 
                     else
-                        ( phase, winner )
-
-                nextCmd =
-                    if nextPhase == Ended then
-                        Random.generate ShuffleDeck Deck.randomDeck
-
-                    else
-                        Cmd.none
+                        Ended
 
                 betValue =
-                    totalBet bets
+                    totalBet model.bets
 
                 totalWinning =
-                    calculateWinning nextWinner betValue playerScore
+                    calculateWinning winner betValue player.score
 
-                nextBank =
-                    bank
+                bank =
+                    model.bank
+                        -- Add winning to bank
                         + totalWinning
                         -- Return bet if player wins or if it's a draw
-                        + (if nextWinner == Bettor || nextWinner == Draw then
+                        + (if winner == Bettor || winner == Draw then
                             betValue
 
                            else
                             0
                           )
 
-                nextBets =
-                    if nextWinner == NoWinner then
-                        bets
+                bets =
+                    if winner == NoWinner then
+                        model.bets
 
                     else
                         []
-
-                handsWon =
-                    if nextWinner == Bettor then
-                        model.handsWon + 1
-
-                    else
-                        model.handsWon
-
-                highestBank =
-                    if nextBank > model.highestBank then
-                        nextBank
-
-                    else
-                        model.highestBank
-
-                highestWinning =
-                    if totalWinning > model.highestWinning then
-                        totalWinning
-
-                    else
-                        model.highestWinning
             in
             ( { model
-                | phase = nextPhase
-                , winner = nextWinner
-                , bank = nextBank
-                , bets = nextBets
-                , handsWon = handsWon
-                , highestBank = highestBank
-                , highestWinning = highestWinning
+                | phase = phase
+                , winner = winner
+                , bank = bank
+                , bets = bets
               }
-            , nextCmd
+            , if phase == Ended then
+                -- Shuffle deck if game has ended
+                Random.generate ShuffleDeck Deck.randomDeck
+
+              else
+                Cmd.none
             )
+                |> Update.Extra.andThen update (UpdateGameStats totalWinning)
                 |> Update.Extra.andThen update UpdateChips
-                |> Update.Extra.filter (nextPhase == PlayerStand)
+                |> Update.Extra.filter (phase == PlayerStand)
                     (Update.Extra.andThen update DealerDraw)
 
         Deal ->
@@ -424,6 +408,37 @@ update msg model =
                     List.map (\c -> { c | active = c.value <= model.bank }) model.chips
             in
             ( { model | chips = chips }, Cmd.none )
+
+        UpdateGameStats totalWinning ->
+            let
+                handsWon =
+                    if model.winner == Bettor then
+                        model.handsWon + 1
+
+                    else
+                        model.handsWon
+
+                highestBank =
+                    if model.bank > model.highestBank then
+                        model.bank
+
+                    else
+                        model.highestBank
+
+                highestWinning =
+                    if totalWinning > model.highestWinning then
+                        totalWinning
+
+                    else
+                        model.highestWinning
+            in
+            ( { model
+                | handsWon = handsWon
+                , highestBank = highestBank
+                , highestWinning = highestWinning
+              }
+            , Cmd.none
+            )
 
         RestartGame ->
             ( initialModel, Random.generate ShuffleDeck Deck.randomDeck )
