@@ -9,3 +9,6 @@ A classic game, made to learn Elm.
 1. [Install Elm](https://guide.elm-lang.org/install/elm.html)
 2. [Install elm-live](https://www.elm-live.com/)
 3. Run `bin/start` to start a dev server
+
+### Live demo
+https://romantic-franklin-e61238.netlify.app/
