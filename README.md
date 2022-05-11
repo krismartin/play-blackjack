@@ -1,8 +1,9 @@
-![alt BlackJack](https://github.com/krismartin/play-blackjack/blob/774c8124a9300b421ff804c5cec61dd3266b33b5/public/assets/favicon/android-chrome-192x192.png)
-
 # Play Blackjack
 
 A classic game, made to learn Elm.
+
+<img width="650" alt="screenshot" src="https://user-images.githubusercontent.com/31802/167766214-27bd16bc-dfbf-462c-9a29-f1838ef926f7.png">
+
 
 ## Getting Started
 
